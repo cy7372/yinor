@@ -4,7 +4,6 @@
 
 ```
 yinor/
-├── docs/GRAPHITI_ARCHITECTURE.md  # 架构研究笔记（自研蓝图）
 ├── yinor/                 # 自研记忆系统（Python 包）
 │   ├── models.py           # 数据模型（Episode/Entity/Fact/搜索）
 │   ├── storage.py          # SQLite+FTS5 存储层（含向量存取、邻域查询）
