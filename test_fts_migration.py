@@ -13,7 +13,10 @@ from yinor.storage import Storage, fts_text
 
 src = Path("data/yinor.db")
 dst = Path(tempfile.gettempdir()) / "yinor_mig_test.db"
-shutil.copy(src, dst)
+try:
+    shutil.copy(src, dst)
+except FileNotFoundError:
+    sys.exit(f"测试库 {src} 不存在（需在项目根目录、且已有数据时运行）")
 
 # ── 迁移前状态 ──
 raw = sqlite3.connect(dst)
@@ -62,13 +65,13 @@ print(f"[中文召回] entities MATCH '记忆' → {len(hits3)} 条")
 # ── 预切分单测 ──
 assert fts_text("知识图谱") == "知 识 图 谱"
 assert fts_text("端口20102") == "端 口 20102"
-assert fts_text("cyRouter重启") == "cyRouter 重 启"
+assert fts_text("LLM重启") == "LLM 重 启"
 assert fts_text("") == ""
 print("[fts_text] 单测全过")
 
 # ── 写入同步验证：新 episode 入库后 FTS 即时可查 ──
 import uuid
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 ep = Episode(
     uuid=str(uuid.uuid4()),
@@ -77,7 +80,7 @@ ep = Episode(
     source="text",
     source_description="t",
     content="折叠按钮的配色方案是青绿色",
-    created_at=datetime.now(timezone.utc).isoformat(),
+    created_at=datetime.now(UTC).isoformat(),
     valid_at=None,
 )
 st.upsert_episode(ep)

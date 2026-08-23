@@ -1,4 +1,4 @@
-"""yinor 数据模型（参考 Graphiti 设计精简）。"""
+"""yinor 数据模型。"""
 
 from __future__ import annotations
 

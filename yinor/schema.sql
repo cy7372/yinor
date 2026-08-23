@@ -1,5 +1,5 @@
 -- yinor SQLite schema
--- 自研记忆系统：时序上下文图（参考 Graphiti 设计，SQLite+FTS5 实现）
+-- yinor：时序上下文图（SQLite+FTS5 实现）
 
 CREATE TABLE IF NOT EXISTS episodes (
     uuid               TEXT PRIMARY KEY,

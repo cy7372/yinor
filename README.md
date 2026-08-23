@@ -56,9 +56,9 @@ cp .env.example .env
 | 项 | 选择 | 理由 |
 | --- | --- | --- |
 | 存储 | SQLite + FTS5 | 零依赖、文件即库、FTS5 强、向量 numpy 自管（单用户量级够用） |
-| LLM | cyRouter (127.0.0.1:20100) | 本地路由，deepseek-v4-flash 提取（temp=0.1 稳定） |
-| Embedding | text-embedding-v3 (1024维) | cyRouter 自带，维度匹配 |
-| 结构化输出 | json_object 模式 | cyRouter 不支持 json_schema；不注入 schema（实测干扰模型） |
+| LLM | 任意 OpenAI 兼容端点 | 提取用低温度（0.1）求稳定；端点/模型 .env 可配 |
+| Embedding | 默认 1024 维 | 模型/维度 .env 可配，换模型需全新建库 |
+| 结构化输出 | json_object 模式 | 不依赖 json_schema；不注入 schema（实测干扰模型） |
 | 时序 | valid_at/invalid_at/expired_at | 事实不删除只失效，支持 as_of 历史查询 |
 
 ## 已验证能力

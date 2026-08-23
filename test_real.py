@@ -23,10 +23,10 @@ async def main():
 
     # 模拟一个项目的演变对话（第 3 条与第 2 条矛盾：存储方案变了）
     episodes = [
-        "我们打算搭建自己的记忆系统，参考 Graphiti 项目。计划用 Python 实现，LLM 走本地 cyRouter，存储后端先用 Kuzu。",
-        "今天跑通了 Graphiti：用 Kuzu 嵌入式 + cyRouter 的 deepseek-v4-flash 做提取，embedding 用 text-embedding-v3。发现 falkordblite 不支持 Windows。",
-        "决定自研精简版 yinor：存储后端改成 SQLite + FTS5，不用 Kuzu 了，因为 Kuzu 已停维护。MVP 保留时序、溯源、混合检索。",
-        "用户偏好：cyRouter 的 key 存在 .env 的 CYROUTER_API_KEY。记忆系统最终要集成成 pi 扩展，逐步替换 MindMemOS。",
+        "我们打算搭建自己的记忆系统，项目代号 yinor。计划用 Python 实现，LLM 走本地网关，存储后端先用 PostgreSQL。",
+        "今天跑通了提取管线：PostgreSQL 存图 + 轻量模型做提取，embedding 用 text-embedding-v3。发现运维负担太重。",
+        "决定改用 SQLite + FTS5，不用 PostgreSQL 了，单用户场景文件即库更简单。保留时序、溯源、混合检索。",
+        "用户偏好：LLM 的 key 存在 .env 的 LLM_API_KEY。服务监听 127.0.0.1:20102，提供 REST API。",
     ]
 
     for i, content in enumerate(episodes):
@@ -37,8 +37,8 @@ async def main():
     resp = await mem.search("我们的记忆系统用什么存储")
     print(fmt_search(resp))
 
-    print("\n########## 搜索: Kuzu 相关 ##########")
-    resp = await mem.search("Kuzu 是什么状态")
+    print("\n########## 搜索: PostgreSQL 相关 ##########")
+    resp = await mem.search("PostgreSQL 是什么状态")
     print(fmt_search(resp))
 
     print("\n########## history: yinor ##########")

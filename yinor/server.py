@@ -37,7 +37,7 @@ from .models import Episode
 from .storage import Storage
 
 # 服务进程跑在 Session 0（Servy/Windows 服务），不继承用户 shell 环境，
-# 必须显式加载项目根目录的 .env（CYROUTER_API_KEY 等）
+# 必须显式加载项目根目录的 .env（LLM_API_KEY 等）
 load_dotenv(Path(__file__).resolve().parent.parent / ".env", override=True)
 
 logger = logging.getLogger(__name__)
@@ -734,7 +734,7 @@ async def _run_backfill(
                          AND length(p.content) > 200
                          AND (p.content LIKE '%端口%' OR p.content LIKE '%配置%'
                               OR p.content LIKE '%决策%' OR p.content LIKE '%部署%'
-                              OR p.content LIKE '%修复%' OR p.content LIKE '%cyRouter%'
+                              OR p.content LIKE '%修复%' OR p.content LIKE '%网关%'
                               OR p.content LIKE '%yinor%' OR p.content LIKE '%记忆%'
                               OR p.content LIKE '%搜索%' OR p.content LIKE '%模型%')
                          AND NOT EXISTS (
@@ -956,7 +956,7 @@ async def _schedule_migration_digest() -> None:
     """迁移消化：t+90s 检测未提取迁移存量，>0 自动启动全量提取（并发 3）。
 
     NOT EXISTS mentions 幂等——服务重启后自动跳过已完成条目续跑（2026-08-13 用户
-    决定全量重处理 4787 条 MindMemOS 迁移记忆，短文优先，实测预计 3-4 天）。
+    决定全量重处理 4787 条迁移记忆，短文优先，实测预计 3-4 天）。
     消化期间 dedup 24h 周期会被锁跳过（层 0 源头拦截大部分重复，消化完统一清理）。
     """
 
@@ -999,7 +999,7 @@ async def _schedule_migration_digest() -> None:
                     logger.info("迁移消化完成：全部提取完毕")
                     return
                 # 故障熔断：处理率 <10% 说明 LLM 在故障期（2026-08-13 并发5
-                # 把 cyRouter 打过载的教训），拉长重试间隔防无限空转烧请求
+                # 把上游 LLM 打过载的教训），拉长重试间隔防无限空转烧请求
                 if 0 <= ok_n < max(1, n // 10):
                     logger.warning(
                         "迁移消化处理率过低(%d/%d)，疑似 LLM 故障，30 分钟后重试",

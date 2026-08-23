@@ -1,6 +1,6 @@
 """混合检索：FTS5(BM25) + 向量余弦 → RRF 融合 → 图遍历扩展。
 
-参考 Graphiti 的搜索设计（四层 scope + 混合检索），精简为：
+参考时序知识图谱的搜索设计（四层 scope + 混合检索），精简为：
 - 事实检索：FTS + 向量 → RRF 融合（默认只看当前有效事实，支持 as_of 历史查询）
 - 实体检索：FTS + 向量 → 实体候选
 - 图遍历：命中实体的一跳邻域事实（"如果改了 X，还关联什么"）
@@ -151,7 +151,7 @@ class Searcher:
                     self.storage.get_facts_mentioning(ent.uuid, group_id)
                 )
                 # same_as：跨分区链接实体的 facts 也汇聚（保留各自 group_id，
-                # 跨组互认不合并——在 Suey 搜 cyRouter 也能看到 yinor 组的知识）
+                # 跨组互认不合并——在 A 分区搜某实体也能看到 B 分区的相关知识）
                 for lu in self.storage.get_linked_uuids(ent.uuid):
                     neighborhood.extend(self.storage.get_facts_mentioning_any_group(lu))
                 for f in neighborhood:

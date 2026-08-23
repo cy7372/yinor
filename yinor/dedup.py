@@ -3,7 +3,7 @@
 策略——保守、可解释、低误报。把候选分两档：
   • auto_merge=True：归一化同名 / 分隔符差异 / 路径归一 / 域名 www 前缀 /
     中英对照（高相似）→ 可由后台或一键按钮自动合并
-  • auto_merge=False：npm scope 包名不同（@suey/web≠@suey/gateway）、
+  • auto_merge=False：npm scope 包名不同（@scope/web≠@scope/gateway）、
     路径↔非路径（~/.pi≠pi）、事件↔对象（图谱建成≠图谱）等 → 仅生成候选，留人工确认
 
 扫描逻辑（find_candidates）从 server 的 quality 端点统一收口于此，
@@ -89,28 +89,28 @@ def should_auto_merge(a: str, b: str, sim: float | None) -> tuple[bool, str]:
 
     sim 为两者名称向量相似度证据；**None = 无向量证据**（如写入时层0 全量预匹配），
     此时依赖相似度的规则（同名路径项 / 中英对照）一律禁用——
-    否则全量配对下"纯ASCII名 × 含CJK名"会被误并（实测 NGINX→GLM套餐 事故）。
+    否则全量配对下"纯ASCII名 × 含CJK名"会被误并（如把 NGINX 误并到中文套餐名的事故）。
     """
     a, b = a or "", b or ""
 
     # 排除1：npm scope 包——只要任一是 scope 包，必须包名完全相同才放行
-    # （@suey/web 与 @suey/gateway 是不同实体；@suey/web 与 web 也保守跳过）
+    # （@scope/web 与 @scope/gateway 是不同实体；@scope/web 与 web 也保守跳过）
     sa, sb = scoped_name(a), scoped_name(b)
     if sa is not None or sb is not None:
         if sa != sb:
             return False, "scope包名不同"
-        # 包名相同（@suey/web vs @SUEY/Web）→ 落到下面规则A判定
+        # 包名相同（@scope/web vs @SCOPE/Web）→ 落到下面规则A判定
 
     # 排除2：路径 ↔ 非路径（~/.pi vs pi；E:\\dir vs dir）
     if is_path(a) != is_path(b):
         return False, "路径↔非路径"
 
     na, nb = norm_name(a), norm_name(b)
-    # 规则A：归一化等价（大小写 / 标点 / 空格差异，如 cyRouter≡cyrouter、Nginx≡nginx）
+    # 规则A：归一化等价（大小写 / 标点 / 空格差异，如 Yinor≡yinor、Nginx≡nginx）
     if na and na == nb:
         return True, "归一化同名"
 
-    # 规则E：去全部分隔符后等价（cy-router ≡ cyrouter；mindmemos CLI 重名）
+    # 规则E：去全部分隔符后等价（my-app ≡ myapp）
     aa, ab = alnum_only(a), alnum_only(b)
     if aa and aa == ab:
         return True, "分隔符差异"
@@ -123,7 +123,7 @@ def should_auto_merge(a: str, b: str, sim: float | None) -> tuple[bool, str]:
         if sim is not None and _basename(a) == _basename(b) and sim >= 0.93:
             return True, "同名路径项"
 
-    # 规则C：双方都形似域名，去 www 前缀等价（www.dancher.net ≡ dancher.net）
+    # 规则C：双方都形似域名，去 www 前缀等价（www.example.com ≡ example.com）
     if is_domain(a) and is_domain(b) and _strip_www(a) == _strip_www(b):
         return True, "域名www前缀"
 
@@ -189,7 +189,7 @@ def find_candidates(
         def pair_sim(
             a: str, b: str, emb_idx=emb_idx, mat=mat, norms=norms
         ) -> float | None:
-            # 默认参数绑定当前轮的循环变量（B023）：闭包仅当轮使用，禁后期绑定歧义
+            # 默认参数绑定当前轮循环变量（B023）：闭包仅当轮使用，避免后期绑定歧义
             ia, ib = emb_idx.get(a), emb_idx.get(b)
             if ia is None or ib is None:
                 return None

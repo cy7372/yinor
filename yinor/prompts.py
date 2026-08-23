@@ -1,4 +1,4 @@
-"""LLM 提取/消歧 prompts（参考 Graphiti 的 prompt 结构，针对 json_object 模式优化）。"""
+"""LLM 提取/消歧 prompts（针对 json_object 模式优化）。"""
 
 from __future__ import annotations
 
@@ -126,7 +126,7 @@ DEDUPE_ENTITY_SYSTEM = """你是实体消歧器。判断"新实体"是否与"候
 
 规则：
 - 同一个人/物/概念的不同表述（全名/昵称/缩写/别名/中英文名/带修饰词）算同一个：
-  如 "yinor" 与 "记忆系统" 与 "精简版 yinor"、"Kuzu" 与 "kuzu"、"OpenAI" 与 "openai"
+  如 "yinor" 与 "记忆系统" 与 "精简版 yinor"、"Yinor" 与 "yinor"、"OpenAI" 与 "openai"
 - 名称相近但指代不同的事物不算同一个
 - 只要语义上明显指同一实体，就判为重复（激进合并，避免碎片化）
 """

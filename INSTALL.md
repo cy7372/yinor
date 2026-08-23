@@ -12,7 +12,7 @@
 | LLM 端点 | OpenAI 兼容 `/v1` 接口 | 需要 chat（支持 json_object 更佳）+ embeddings 两个能力 |
 | 磁盘 | ~200MB（代码+venv），记忆库另算 | data/yinor.db 单文件 |
 
-没有本机 cyRouter 也可以：任何兼容端点都行（DeepSeek、硅基流动、自建 vLLM 等），
+没有本机 LLM 网关也可以：任何兼容端点都行（DeepSeek、硅基流动、自建 vLLM 等），
 在 `.env` 里改 `YINOR_LLM_BASE_URL` / `YINOR_LLM_MODEL` / `YINOR_EMBED_MODEL` 即可。
 **注意**：embedding 模型维度需与 `YINOR_EMBED_DIM` 一致（默认 1024），且换模型后
 旧向量与新向量不互通——新机器全新建库无影响，迁移旧库请沿用同一 embedding 模型。
@@ -53,14 +53,14 @@ uv venv .venv && uv pip install -r requirements.txt
 
 ```powershell
 copy .env.example .env
-# 编辑 .env：至少填 CYROUTER_API_KEY
+# 编辑 .env：至少填 LLM_API_KEY
 ```
 
-直连云端（无 cyRouter）的典型配置：
+直连云端的典型配置（默认指向本机网关，无网关时必须显式配置）：
 
 ```ini
 YINOR_LLM_BASE_URL=https://api.deepseek.com/v1
-CYROUTER_API_KEY=sk-你的key
+LLM_API_KEY=sk-你的key
 YINOR_LLM_MODEL=deepseek-chat
 YINOR_EMBED_MODEL=...      # 该服务商的 embedding 模型
 YINOR_EMBED_DIM=...        # 对应维度
@@ -134,22 +134,25 @@ sudo servy-cli stop --name=yinor     # Windows
 新机器首次启动会自动做 schema 迁移（FTS 重建等，幂等）。
 **沿用同一 embedding 模型**，否则旧向量与新向量相似度失真。
 
-## 6. pi 集成（可选）
+## 6. Agent 集成（可选）
 
-在装了 pi 的机器上，把 `yinor.ts` 扩展放到 `~/.pi/agent/extensions/`，并设置环境变量：
+yinor 是纯 REST 服务，任意 agent 框架 / HTTP 客户端均可对接，核心接口：
 
 ```text
-YINOR_URL=http://127.0.0.1:20102   # 服务地址（默认本机）
+POST /episodes     写入记忆（JSON: content, group_id, extract, wait）
+GET  /search?q=    混合检索（facts/entities/episodes 三段）
+GET  /history?entity=  实体演变史
+GET  /stats        统计
 ```
 
-重启 pi 后即有 yinor_add / yinor_search / yinor_episode / yinor_history / yinor_stats
-工具与自动上下文注入。跨机器部署时扩展连的是网络地址，不要求和 yinor 同机。
+与 agent 会话循环集成时，常见做法是：用户消息到达 → 先 /search 检索相关记忆
+注入上下文 → 会话结束把值得记住的内容 POST /episodes（extract=true 后台提取）。
 
 ## 7. 常见问题
 
 | 症状 | 原因/解法 |
 | --- | --- |
-| 启动即 `缺少 CYROUTER_API_KEY` | .env 没建或没填；服务跑在 Session 0 时不继承用户环境，必须靠项目根 .env |
+| 启动即 `缺少 LLM_API_KEY` | .env 没建或没填；服务跑在 Session 0 时不继承用户环境，必须靠项目根 .env |
 | 提取一直失败/空响应 | LLM 端点不支持 json_object 或模型太弱；换模型，提取管线对结构化输出要求高 |
 | embedding 400 | 批量上限约 10 条/次（已在代码内分块）；单条失败多为维度不匹配，核对 YINOR_EMBED_DIM |
 | `database is locked` | 多进程各开连接抢写锁；确认只有一个服务实例在跑，CLI 调试时先停服务 |

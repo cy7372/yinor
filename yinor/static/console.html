@@ -838,7 +838,7 @@
       let showIsolated = false,
         showEdgeLabels = false;
 
-      // 类型色板（参考 Suey ConceptGraph v2）：深色填充保持克制，颜色只出现在边框上
+      // 类型色板：深色填充保持克制，颜色只出现在边框上
       const TYPE_COLOR = {
         Concept: "#4c8cff",
         Tool: "#34d399",
@@ -942,46 +942,49 @@
               const dgr = deg[n.id] || 0;
               const hidden = hideIso && dgr === 0;
               if (hidden) isoCount++;
-            const accent = colored ? groupColor(n.group) : typeColor(n.labels);
-            const tier = tierOf(dgr);
-            const [ax, ay] = anchorPos(n.labels, n.id);
-            return {
-              id: n.id,
-              x: ax,
-              y: ay,
-              mass: 1 + dgr * 0.2, // 枢纽更重：位置更稳、斥力更强
-              label: n.label.length > 16 ? n.label.slice(0, 15) + "…" : n.label,
-              // 不传 title——避免悬停弹 tooltip（详情走点击抽屉，读 graphData）
-              labels: n.labels,
-              hidden,
-              // 注意：不能传 group 字段——vis 的 Groups 机制会给未知组分配默认色，
-              // 且任何不含 color 的后续 update 都会被组色整个覆盖（v9.1.9 Node.js 已验证）
-              shape: "box",
-              margin: 8,
-              color: {
-                background: "#1a2332",
-                border: withAlpha(accent, tier.alpha),
-                highlight: { background: "#262a32", border: accent },
-                hover: { background: "#262a32", border: accent },
-              },
-              font: {
-                color: tier.text,
-                size: tier.size,
-              },
-              borderWidth: tier.width,
-              shapeProperties: { borderRadius: 5 },
-              shadow:
-                dgr >= 6
-                  ? {
-                      enabled: true,
-                      color: withAlpha(accent, 0.35),
-                      size: 12,
-                      x: 0,
-                      y: 0,
-                    }
-                  : { enabled: false },
-              opacity: dgr === 0 ? 0.45 : 1,
-            };
+              const accent = colored
+                ? groupColor(n.group)
+                : typeColor(n.labels);
+              const tier = tierOf(dgr);
+              const [ax, ay] = anchorPos(n.labels, n.id);
+              return {
+                id: n.id,
+                x: ax,
+                y: ay,
+                mass: 1 + dgr * 0.2, // 枢纽更重：位置更稳、斥力更强
+                label:
+                  n.label.length > 16 ? n.label.slice(0, 15) + "…" : n.label,
+                // 不传 title——避免悬停弹 tooltip（详情走点击抽屉，读 graphData）
+                labels: n.labels,
+                hidden,
+                // 注意：不能传 group 字段——vis 的 Groups 机制会给未知组分配默认色，
+                // 且任何不含 color 的后续 update 都会被组色整个覆盖（v9.1.9 Node.js 已验证）
+                shape: "box",
+                margin: 8,
+                color: {
+                  background: "#1a2332",
+                  border: withAlpha(accent, tier.alpha),
+                  highlight: { background: "#262a32", border: accent },
+                  hover: { background: "#262a32", border: accent },
+                },
+                font: {
+                  color: tier.text,
+                  size: tier.size,
+                },
+                borderWidth: tier.width,
+                shapeProperties: { borderRadius: 5 },
+                shadow:
+                  dgr >= 6
+                    ? {
+                        enabled: true,
+                        color: withAlpha(accent, 0.35),
+                        size: 12,
+                        x: 0,
+                        y: 0,
+                      }
+                    : { enabled: false },
+                opacity: dgr === 0 ? 0.45 : 1,
+              };
             })
             .filter(Boolean),
         );

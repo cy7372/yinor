@@ -1,6 +1,6 @@
 """摄入 pipeline：LLM 提取 → 实体消歧 → 事实消歧（时序） → summary 演进 → 落库。
 
-参考 Graphiti 的设计，精简为单 episode 流程：
+单 episode 流程：
 1. 存 episode（先落库，失败可重试）
 2. LLM 提取候选实体（带类型分类）
 3. 实体消歧：名称/向量/LLM 三层判定，映射到图内已有实体或新建

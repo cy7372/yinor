@@ -1,9 +1,8 @@
-"""cyRouter LLM 客户端：chat（json_object 结构化输出）+ embedding。
+"""LLM 客户端：chat（json_object 结构化输出）+ embedding。
 
-参考 Graphiti OpenAIGenericClient 的成熟做法：
-- structured_output_mode=json_object：cyRouter 不支持 json_schema，把 schema 注入 prompt
-- 剥离 ```json 代码围栏、失败重试（tenacity，4 次带退避）
-- embedding 用 cyRouter 的 text-embedding-v3（1024 维）
+- structured_output_mode=json_object：端点不支持 json_schema 时把 schema 注入 prompt
+- 剥离 ```json 代码围栏、失败重试（退避）
+- embedding 走同一端点的 /embeddings（默认 1024 维）
 """
 
 from __future__ import annotations
@@ -20,10 +19,10 @@ from pydantic import BaseModel
 logger = logging.getLogger(__name__)
 
 # 端点/模型均可用环境变量覆盖（.env），便于部署到其他机器：
-#   YINOR_LLM_BASE_URL  OpenAI 兼容端点（默认本机 cyRouter）
+#   YINOR_LLM_BASE_URL  OpenAI 兼容端点（默认本机网关）
 #   YINOR_LLM_MODEL     提取/对话模型
 #   YINOR_EMBED_MODEL   embedding 模型（1024 维）
-CYROUTER_URL = os.environ.get("YINOR_LLM_BASE_URL", "http://127.0.0.1:20100/v1")
+DEFAULT_LLM_URL = os.environ.get("YINOR_LLM_BASE_URL", "http://127.0.0.1:20100/v1")
 DEFAULT_MODEL = os.environ.get("YINOR_LLM_MODEL", "auto")
 EMBED_MODEL = os.environ.get("YINOR_EMBED_MODEL", "text-embedding-v3")
 try:
@@ -41,7 +40,7 @@ class LLMError(Exception):
 class LLMClient:
     def __init__(
         self,
-        base_url: str = CYROUTER_URL,
+        base_url: str = DEFAULT_LLM_URL,
         api_key: str | None = None,
         model: str = DEFAULT_MODEL,
         embed_model: str = EMBED_MODEL,
@@ -52,9 +51,11 @@ class LLMClient:
         timeout: float = 120.0,
     ):
         self.base_url = base_url.rstrip("/")
-        self.api_key = api_key or os.environ.get("CYROUTER_API_KEY")
+        self.api_key = api_key or os.environ.get("LLM_API_KEY") or os.environ.get(
+            "CYROUTER_API_KEY"  # 兼容旧变量名
+        )
         if not self.api_key:
-            raise LLMError("缺少 CYROUTER_API_KEY 环境变量（或传入 api_key）")
+            raise LLMError("缺少 LLM_API_KEY 环境变量（或传入 api_key）")
         self.model = model
         self.embed_model = embed_model
         self.embed_dim = embed_dim
@@ -169,7 +170,7 @@ class LLMClient:
     async def embed_batch(self, texts: list[str]) -> list[list[float]]:
         if not texts:
             return []
-        # cyRouter/上游批量限制：实测 >15 条 400，分批 10 条；每块独立重试
+        # 上游批量限制：>15 条可能 400，分批 10 条；每块独立重试
         out: list[list[float]] = []
         for i in range(0, len(texts), 10):
             chunk = texts[i : i + 10]

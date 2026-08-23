@@ -43,7 +43,7 @@ def _parse_json(s: str | None, default: Any) -> Any:
         return default
     try:
         return json.loads(s)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as _:
         return default
 
 
