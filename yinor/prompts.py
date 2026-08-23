@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 from .entity_types import entity_type_prompt
@@ -70,6 +72,35 @@ class EntitySummaries(BaseModel):
     summaries: list[dict[str, str]] = Field(
         description="[{name, summary}] 只包含需要更新 summary 的实体"
     )
+
+
+class RerankResult(BaseModel):
+    scores: list[dict[str, Any]] = Field(
+        default_factory=list,
+        description="[{id, score}] 每个候选与查询的相关度评分（0-10，10=直接回答查询）",
+    )
+
+
+RERANK_SYSTEM = """你是检索重排器。给定查询和一批候选记忆，逐一判断每条候选对回答该查询的相关度。
+
+评分标准（0-10）：
+- 9-10 直接回答查询所问的事实/决策/结论
+- 6-8  与查询主题强相关，提供重要背景
+- 3-5  主题沾边但不是查询要的
+- 0-2  无关（词面相似但语义无关、完全不同领域）
+
+规则：
+- 所有候选都要打分，不允许省略
+- 只看语义相关性，不要因为候选简短或日期远近加分
+"""
+
+RERANK_USER = """查询：{query}
+
+候选（id | 内容）：
+{candidates}
+
+输出 JSON：{{"scores": [{{"id": 0, "score": 8}}, ...]}}
+"""
 
 
 # ---------- prompts ----------

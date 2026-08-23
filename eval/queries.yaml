@@ -1,0 +1,57 @@
+# 印·Yinor 黄金评测集
+# 格式：每条 = 查询 + 期望命中的 episode uuid（任一命中记分）+ groups（模拟 pi 扩展双层检索的分区）
+# 分层：语义型（无词面重叠）/ 词面型 / 时间敏感型 / 噪音对抗型
+# 用法：python eval_search.py [-v]
+# 注意：评测集针对本地数据分布构建，换库后需重建
+
+queries:
+  # ---- 语义型（考察向量通道）----
+  - q: "记忆系统怎么部署成服务"
+    expect_episodes: ["2d3400c4-e698-48b6-9d35-fb045c9bceae"]
+    groups: [default]
+    note: "Servy 纳入管理"
+  - q: "agent 和记忆服务怎么分工"
+    expect_episodes: ["69de08ee-86ac-4605-986e-d8b663f72e48"]
+    groups: [Programs, default]
+    note: "独立安装决策"
+  - q: "论文投稿模板有什么要注意的"
+    # 模板细节或官方模板选择均算命中
+    expect_episodes:
+      - "b4dcbf11-8ffe-4402-a00e-22666af00c6f"
+      - "be398d3c*"
+    groups: [Weather_Decision_Support_Agent, default]
+    note: "ICLR 模板（多目标）"
+  - q: "键盘功能键坏了怎么排查"
+    expect_episodes: ["97eedf00-3b88-45da-aa64-200ecf230226"]
+    groups: [DancherLink-qt, default]
+    note: "F1-F12 失效根因"
+  - q: "Linux 打包坏了怎么办"
+    expect_episodes: ["3783edee-2a94-49f4-b897-495dc04cd2ce"]
+    groups: [DancherLink-qt, default]
+    note: "AppImage 路线废弃"
+
+  # ---- 词面型（考察 FTS 通道）----
+  - q: "LLM 的 key 环境变量叫什么"
+    expect_episodes: ["95f690c5-ca27-41de-bb5f-127740471ed1"]
+    groups: [yinor, default]
+    note: "LLM_API_KEY 改名"
+  - q: "选 LLM 供应商有什么偏好"
+    expect_episodes: ["a38c26c5-51cb-4ecd-9953-d8a0775418eb"]
+    groups: [default]
+    note: "DeepSeek 涨价后的供应商偏好"
+
+  # ---- 时间敏感型（考察时间感知检索，改进前预期弱）----
+  - q: "八月中旬 DancherLink 的部署方案是什么"
+    expect_episodes: ["3783edee-2a94-49f4-b897-495dc04cd2ce"]
+    groups: [DancherLink-qt, default]
+    note: "时间限定+项目词"
+  - q: "最近一次对 F1-F12 问题的结论"
+    expect_episodes: ["97eedf00-3b88-45da-aa64-200ecf230226"]
+    groups: [DancherLink-qt, default]
+    note: "相对时间（最近）"
+
+  # ---- 噪音对抗型（当前痛点：语义相近但不相关）----
+  - q: "服务器被入侵了吗"
+    expect_episodes: []
+    groups: [default]
+    note: "负例——验证不注入高噪音"

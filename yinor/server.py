@@ -176,11 +176,17 @@ async def search(
     limit: int = 20,
     as_of: str | None = None,
     include_graph: bool = True,
+    rerank: bool = False,
 ) -> dict[str, Any]:
     mem = _memory()
     try:
         resp = await mem.search(
-            q, group_id=group_id, limit=limit, as_of=as_of, include_graph=include_graph
+            q,
+            group_id=group_id,
+            limit=limit,
+            as_of=as_of,
+            include_graph=include_graph,
+            rerank=rerank,
         )
         return {
             "query": resp.query,

@@ -1665,7 +1665,7 @@
           const fetched = await Promise.all(
             groups.map((g) =>
               api(
-                `/search?q=${encodeURIComponent(q)}&group_id=${encodeURIComponent(g)}&limit=10`,
+                `/search?q=${encodeURIComponent(q)}&group_id=${encodeURIComponent(g)}&limit=10&rerank=true`,
               ).then((d) => ({ g, d })),
             ),
           );

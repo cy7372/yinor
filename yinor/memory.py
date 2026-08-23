@@ -71,6 +71,7 @@ class Memory:
         limit: int = 20,
         as_of: str | None = None,
         include_graph: bool = True,
+        rerank: bool | None = None,
     ) -> SearchResponse:
         """混合检索。as_of 查询历史时刻。"""
         return await self.searcher.search(
@@ -79,6 +80,7 @@ class Memory:
             limit=limit,
             as_of=as_of,
             include_graph=include_graph,
+            rerank=rerank,
         )
 
     async def history(
