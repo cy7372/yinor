@@ -1,9 +1,4 @@
-# 印·Yinor — 自研记忆系统
-
-> 正式命名：**印·Yinor**（印记、印证之意；2026-08-10 定名）
-
-基于 [Graphiti](https://github.com/getzep/graphiti)（Zep 开源时序知识图谱）的架构思想，
-自研的轻量记忆系统，逐步替换 MindMemOS。
+# 印·Yinor — 记忆系统
 
 ## 目录结构
 
