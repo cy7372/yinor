@@ -1,9 +1,5 @@
 # 印·Yinor — 自研记忆系统
 
-[![CI](https://github.com/cy7372/yinor/actions/workflows/ci.yml/badge.svg)](https://github.com/cy7372/yinor/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/cy7372/yinor)](https://github.com/cy7372/yinor/releases)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-
 > 正式命名：**印·Yinor**（印记、印证之意；2026-08-10 定名）
 
 基于 [Graphiti](https://github.com/getzep/graphiti)（Zep 开源时序知识图谱）的架构思想，
@@ -33,14 +29,6 @@ yinor/
 ├── INSTALL.md              # 部署指南（装到其他机器）
 └── test_*.py               # 端到端/场景测试
 ```
-
-## 架构（一句话）
-
-**时序上下文图**：每条信息（Episode）→ LLM 提取实体+事实（带实体消歧和事实消歧）→
-事实带有效时间窗口（新事实取代旧事实时旧事实自动失效）→ 混合检索（全文+向量+图遍历）。
-
-核心表：`episodes`（原始数据）/ `entities`（实体+演进摘要）/ `facts`（事实+时序窗口）/
-`mentions`（溯源）/ `embeddings`（向量）/ FTS5 全文索引。
 
 ## 快速开始
 
@@ -95,9 +83,3 @@ cp .env.example .env
 2. 向量检索是 brute-force（SQLite 全量加载），实体>10万时需换方案
 3. 单用户定位：SQLite 单连接串行写，不考虑多进程并发写
 4. facts 层对无词面重叠的查询仍有噪音（提取质量 + embedding 聚类，持续治理中）
-
-## 与 Graphiti 的差异（自研取舍）
-
-- 砍掉：communities、sagas、cross-encoder 重排、多图数据库抽象、自定义 ontology 的复杂属性
-- 保留：时序窗口、Episode 溯源、实体消歧、混合检索、summary 演进、group_id 分区
-- 简化：图遍历用 SQL 邻接查询（一跳），不做多跳 BFS
