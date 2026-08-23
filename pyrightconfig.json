@@ -1,0 +1,22 @@
+{
+  // 根治 pyright 索引慢：项目真实源码只有 ~20 个 .py，
+  // 但根目录有 .venv(6495 文件)/graphiti(38M)/data(50M)。
+  // 无此配置时 pyright 以项目根为分析根全目录遍历 → LSP 30s / CLI 75s 超时。
+  // include 限定分析范围，exclude 排除大目录，venvPath/venv 让三方包类型解析
+  // 走 site-packages（按需 lazy 读取），不再纳入全量索引。
+  "include": ["yinor", "."],
+  "exclude": [
+    ".venv",
+    "graphiti",
+    "data",
+    "**/__pycache__",
+    "**/.pytest_cache",
+    "**/.ruff_cache",
+    ".git",
+    ".pi",
+    "logs",
+    "docs"
+  ],
+  "venvPath": ".",
+  "venv": ".venv"
+}

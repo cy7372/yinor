@@ -1,0 +1,3 @@
+{
+  "ignore": ["yinor/static/*.min.js", "yinor/static/*.min.js.map"]
+}

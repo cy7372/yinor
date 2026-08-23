@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      - run: ruff check yinor
+
+  smoke:
+    # 端到端测试依赖外部 LLM 端点（.env 的 key），不适合在 CI 跑；
+    # CI 做导入冒烟 + schema 校验 + 依赖完整性验证。
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+      - run: pip install -r requirements.txt
+      - name: import smoke
+        run: |
+          python -c "
+          import yinor, yinor.server, yinor.memory
+          import yinor.search, yinor.dedup, yinor.reflect
+          print(yinor.__version__)
+          "
+      - name: schema smoke（SQLite 建库）
+        run: |
+          python -c "
+          import tempfile, os
+          from yinor.storage import Storage
+          p = os.path.join(tempfile.mkdtemp(), 't.db')
+          s = Storage(p)
+          print('tables ok')
+          s.close()
+          "

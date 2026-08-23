@@ -1,0 +1,1912 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>印·Yinor 控制台</title>
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+    <link
+      rel="icon"
+      type="image/png"
+      sizes="32x32"
+      href="/static/favicon-32.png"
+    />
+    <script src="/static/vis-network.min.js?v=2"></script>
+    <style>
+      :root {
+        --bg: #1b1d23;
+        --panel: #23262e;
+        --panel2: #2a2e37;
+        --border: #3a3f4b;
+        --text: #d7dae0;
+        --dim: #8b919e;
+        --accent: #4ec9b0;
+        --accent2: #569cd6;
+        --warn: #d7a04e;
+        --danger: #e06c75;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        background: var(--bg);
+        color: var(--text);
+        font:
+          14px/1.5 -apple-system,
+          "Segoe UI",
+          "Microsoft YaHei",
+          sans-serif;
+        height: 100vh;
+        overflow: hidden;
+      }
+      .app {
+        display: flex;
+        height: 100vh;
+      }
+      /* ── 侧边栏 ── */
+      .sidebar {
+        width: 196px;
+        flex-shrink: 0;
+        background: var(--panel);
+        border-right: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        transition: width 0.15s ease;
+      }
+      .sidebar.collapsed {
+        width: 52px;
+      }
+      .sidebar.collapsed .logo-text,
+      .sidebar.collapsed .side-nav,
+      .sidebar.collapsed .side-section,
+      .sidebar.collapsed .side-stats {
+        display: none;
+      }
+      .logo-row {
+        display: flex;
+        align-items: center;
+        border-bottom: 1px solid var(--border);
+      }
+      .sidebar.collapsed .logo-row {
+        flex-direction: column;
+        border-bottom: 1px solid var(--border);
+      }
+      .logo {
+        flex: 1;
+        padding: 16px;
+        font-size: 17px;
+        font-weight: 600;
+        color: var(--accent);
+        letter-spacing: 1px;
+        cursor: pointer;
+        user-select: none;
+        white-space: nowrap;
+      }
+      .logo:hover {
+        color: var(--text);
+      }
+      .logo-icon {
+        width: 22px;
+        height: 22px;
+        vertical-align: middle;
+        margin-right: 8px;
+        transition:
+          width 0.15s ease,
+          height 0.15s ease;
+      }
+      .sidebar.collapsed .logo-icon {
+        width: 28px;
+        height: 28px;
+        margin-right: 0;
+      }
+      #btn-collapse {
+        flex-shrink: 0;
+        margin: 0 8px;
+        padding: 2px 9px;
+        font-size: 15px;
+        line-height: 1.4;
+        color: var(--dim);
+      }
+      #btn-collapse:hover {
+        color: var(--accent);
+        border-color: var(--accent);
+      }
+      .sidebar.collapsed #btn-collapse {
+        display: none;
+      }
+      /* 折叠态：logo 图标本身就是展开按钮（无描边，靠图标+小箭头提示） */
+      .sidebar.collapsed .logo {
+        flex: none;
+        margin: 4px 0;
+        padding: 9px 0 7px;
+        text-align: center;
+        font-size: 18px;
+        line-height: 1.1;
+        color: var(--accent);
+      }
+      .logo-chev {
+        display: none;
+      }
+      .sidebar.collapsed .logo-chev {
+        display: block;
+        font-size: 11px;
+        margin-top: 2px;
+      }
+      .sidebar.collapsed .logo:hover {
+        color: var(--text);
+      }
+      .side-nav {
+        padding: 10px 8px;
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+      }
+      .nav-item {
+        padding: 9px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        color: var(--dim);
+        font-size: 13px;
+        border-left: 2px solid transparent;
+        user-select: none;
+      }
+      .nav-item:hover {
+        color: var(--text);
+        background: var(--panel2);
+      }
+      .nav-item.active {
+        color: var(--accent);
+        background: var(--panel2);
+        border-left-color: var(--accent);
+      }
+      .side-section {
+        padding: 14px;
+        border-top: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--dim);
+      }
+      .side-section select {
+        width: 100%;
+        margin-top: 6px;
+      }
+      .side-stats {
+        margin-top: auto;
+        padding: 14px;
+        border-top: 1px solid var(--border);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .stat-line {
+        display: flex;
+        justify-content: space-between;
+        align-items: baseline;
+        font-size: 12px;
+        color: var(--dim);
+      }
+      .stat-line b {
+        color: var(--text);
+        font-size: 14px;
+      }
+      /* ── 内容区 ── */
+      .content {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+      }
+      .topbar {
+        display: flex;
+        gap: 8px;
+        padding: 10px 16px;
+        background: var(--panel);
+        border-bottom: 1px solid var(--border);
+      }
+      .topbar input {
+        flex: 1;
+      }
+      input,
+      select,
+      button {
+        background: var(--panel2);
+        color: var(--text);
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 5px 10px;
+        font-size: 13px;
+        outline: none;
+      }
+      input:focus,
+      select:focus {
+        border-color: var(--accent2);
+      }
+      button {
+        cursor: pointer;
+      }
+      button:hover {
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+      main {
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+      }
+      .view {
+        position: absolute;
+        inset: 0;
+        overflow: auto;
+        padding: 14px 16px;
+        display: none;
+      }
+      .view.active {
+        display: block;
+      }
+      #view-graph {
+        padding: 0;
+        display: none;
+        position: relative;
+      }
+      #view-graph.active {
+        display: flex;
+      }
+      #graph-toolbar {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        z-index: 10;
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        background: rgba(35, 38, 46, 0.88);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 6px 12px;
+        font-size: 12px;
+        color: var(--dim);
+      }
+      #graph-toolbar button {
+        padding: 3px 9px;
+        font-size: 12px;
+      }
+      #graph-toolbar label {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        cursor: pointer;
+      }
+      #graph {
+        flex: 1;
+        height: calc(100vh - 62px);
+        min-height: 420px;
+        overflow: hidden;
+        background:
+          radial-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1.5px),
+          radial-gradient(ellipse at center, #22252d 0%, var(--bg) 100%);
+        background-size:
+          22px 22px,
+          100% 100%;
+      }
+      #detail {
+        display: none;
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        width: 320px;
+        background: var(--panel);
+        border-left: 1px solid var(--border);
+        padding: 14px;
+        overflow: auto;
+        font-size: 13px;
+        z-index: 11;
+      }
+      #detail.open {
+        display: block;
+      }
+      #detail h3 {
+        padding-right: 26px;
+      }
+      #detail-close {
+        display: none;
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        z-index: 12;
+        width: 26px;
+        height: 26px;
+        padding: 0;
+        line-height: 1;
+        font-size: 15px;
+      }
+      #graph-legend {
+        position: absolute;
+        right: 12px;
+        bottom: 12px;
+        z-index: 10;
+        background: rgba(35, 38, 46, 0.88);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 12px;
+        font-size: 12px;
+        color: var(--dim);
+        max-height: 42vh;
+        overflow: auto;
+      }
+      #detail h3 {
+        color: var(--accent);
+        margin-bottom: 6px;
+        font-size: 15px;
+        word-break: break-all;
+      }
+      .lbl {
+        display: inline-block;
+        background: var(--panel2);
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        padding: 0 6px;
+        font-size: 11px;
+        color: var(--accent2);
+        margin: 0 4px 4px 0;
+      }
+      .g-badge {
+        display: inline-block;
+        border: 1px solid;
+        border-radius: 4px;
+        padding: 0 5px;
+        font-size: 11px;
+        margin-left: 6px;
+        white-space: nowrap;
+      }
+      #detail .sec {
+        margin-top: 12px;
+        color: var(--dim);
+        font-size: 12px;
+        border-top: 1px solid var(--border);
+        padding-top: 8px;
+      }
+      #detail .fact-item {
+        margin-top: 6px;
+        padding: 6px 8px;
+        background: var(--panel2);
+        border-radius: 6px;
+        border-left: 2px solid var(--accent2);
+        color: var(--text);
+      }
+      .hist-item {
+        margin-top: 6px;
+        padding: 6px 8px;
+        background: var(--panel2);
+        border-radius: 6px;
+        color: var(--text);
+      }
+      .hist-item.h-on {
+        border-left: 2px solid var(--accent);
+      }
+      .hist-item.h-exp {
+        border-left: 2px solid var(--warn);
+      }
+      .hist-item.h-off {
+        border-left: 2px solid var(--danger);
+        opacity: 0.75;
+      }
+      .prov-item {
+        margin: 6px 0;
+        padding: 6px 8px;
+        background: var(--panel);
+        border-left: 2px solid var(--warn);
+        border-radius: 6px;
+        font-size: 12px;
+      }
+      .legend {
+        margin-top: 12px;
+        border-top: 1px solid var(--border);
+        padding-top: 8px;
+        font-size: 12px;
+        color: var(--dim);
+      }
+      .legend-dot {
+        display: inline-block;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        margin-right: 5px;
+        vertical-align: middle;
+      }
+      .placeholder {
+        color: var(--dim);
+        margin-top: 30px;
+        text-align: center;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 13px;
+      }
+      th {
+        text-align: left;
+        color: var(--dim);
+        font-weight: normal;
+        padding: 6px 10px;
+        border-bottom: 1px solid var(--border);
+        position: sticky;
+        top: -14px;
+        background: var(--bg);
+      }
+      td {
+        padding: 7px 10px;
+        border-bottom: 1px solid var(--panel2);
+        vertical-align: top;
+      }
+      tr:hover td {
+        background: var(--panel);
+      }
+      tr.fact-row {
+        cursor: pointer;
+      }
+      .merge-tool {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 0 10px;
+        font-size: 12px;
+      }
+      .merge-tool select {
+        max-width: 260px;
+      }
+      .row-btn {
+        padding: 1px 8px;
+        font-size: 11px;
+        color: var(--dim);
+        background: transparent;
+      }
+      .row-btn:hover {
+        color: var(--danger);
+        border-color: var(--danger);
+      }
+      tr.prov-row td {
+        background: var(--panel2);
+      }
+      .st-on {
+        color: var(--accent);
+      }
+      .st-off {
+        color: var(--danger);
+      }
+      .st-exp {
+        color: var(--warn);
+      }
+      .dim {
+        color: var(--dim);
+        font-size: 12px;
+      }
+      .mono {
+        font-family: Consolas, monospace;
+        font-size: 11px;
+        color: var(--dim);
+      }
+      .ep-card {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 10px 14px;
+        margin-bottom: 10px;
+      }
+      .ep-card .meta {
+        margin-bottom: 6px;
+      }
+      .ep-card .content {
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .ep-card .content.collapsed {
+        max-height: 3em;
+        overflow: hidden;
+        cursor: pointer;
+        position: relative;
+      }
+      .ep-card .content.collapsed::after {
+        content: "▼ 展开";
+        position: absolute;
+        bottom: 0;
+        right: 0;
+        background: var(--panel);
+        color: var(--accent2);
+        font-size: 11px;
+        padding-left: 20px;
+      }
+      #search-results {
+        padding: 10px 16px;
+        position: relative;
+        z-index: 5;
+        background: var(--bg);
+      }
+      .sr-sec {
+        margin: 14px 0 6px;
+        color: var(--accent);
+        font-size: 13px;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 4px;
+      }
+      .sr-item {
+        background: var(--panel);
+        border-left: 3px solid var(--accent);
+        border-radius: 6px;
+        padding: 8px 12px;
+        margin-bottom: 8px;
+      }
+      .sr-item.ent {
+        border-left-color: var(--accent2);
+      }
+      .sr-item.ep {
+        border-left-color: var(--warn);
+      }
+      .sr-item .score {
+        float: right;
+        color: var(--dim);
+        font-size: 11px;
+      }
+      .hint {
+        color: var(--dim);
+        font-size: 12px;
+        margin: 30px auto;
+        text-align: center;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <aside class="sidebar">
+        <div class="logo-row">
+          <div class="logo" id="logo" title="点击收起 / 展开侧栏">
+            <svg class="logo-icon" viewBox="0 0 100 100" aria-hidden="true">
+              <g
+                stroke="#4ec9b0"
+                stroke-width="3"
+                opacity="0.55"
+                stroke-linecap="round"
+              >
+                <line x1="20" y1="20" x2="50" y2="50" />
+                <line x1="80" y1="20" x2="50" y2="50" />
+                <line x1="20" y1="80" x2="50" y2="50" />
+                <line x1="80" y1="80" x2="50" y2="50" />
+              </g>
+              <g fill="#4ec9b0">
+                <circle cx="20" cy="20" r="8" />
+                <circle cx="80" cy="20" r="8" />
+                <circle cx="20" cy="80" r="8" />
+                <circle cx="80" cy="80" r="8" />
+              </g>
+              <circle cx="50" cy="50" r="16" fill="#4ec9b0" />
+              <circle cx="50" cy="50" r="6" fill="#1b1d23" /></svg
+            ><span class="logo-chev">»</span
+            ><span class="logo-text"> 印·Yinor</span>
+          </div>
+          <button id="btn-collapse" title="收起 / 展开侧栏">«</button>
+        </div>
+        <nav class="side-nav">
+          <div class="nav-item active" data-v="graph">图谱</div>
+          <div class="nav-item" data-v="facts">事实</div>
+          <div class="nav-item" data-v="entities">实体</div>
+          <div class="nav-item" data-v="episodes">Episodes</div>
+          <div class="nav-item" data-v="quality">质检</div>
+        </nav>
+        <div class="side-section">
+          分区
+          <select id="group"></select>
+        </div>
+        <div class="side-stats">
+          <div class="stat-line"><span>episodes</span><b id="st-ep">-</b></div>
+          <div class="stat-line"><span>实体</span><b id="st-en">-</b></div>
+          <div class="stat-line"><span>事实</span><b id="st-fa">-</b></div>
+          <div class="stat-line"><span>活跃</span><b id="st-act">-</b></div>
+        </div>
+      </aside>
+
+      <div class="content">
+        <div class="topbar">
+          <input
+            id="q"
+            placeholder="🔍 搜索记忆…（回车执行，全部模式自动合并各分区）"
+          />
+          <button id="btn-search">搜索</button>
+          <button id="btn-clear">清除</button>
+          <button id="btn-refresh">⟳ 刷新</button>
+        </div>
+
+        <main>
+          <div id="search-results" style="display: none"></div>
+
+          <div id="view-graph" class="view active">
+            <div id="graph-toolbar">
+              <button id="btn-fit">⤢ 适应</button>
+              <button id="btn-relayout">↻ 重新布局</button>
+              <label
+                ><input type="checkbox" id="tgl-iso" /> 孤立节点
+                <span id="iso-count"></span
+              ></label>
+              <label><input type="checkbox" id="tgl-elabel" /> 边标签</label>
+              <span id="graph-count" class="dim"></span>
+            </div>
+            <div id="graph"></div>
+            <div id="graph-legend"></div>
+            <div id="detail"></div>
+            <button id="detail-close" title="关闭详情">×</button>
+          </div>
+
+          <div id="view-facts" class="view">
+            <label class="dim"
+              ><input type="checkbox" id="inc-expired" />
+              含已删除（点击行展开溯源）</label
+            >
+            <table>
+              <thead>
+                <tr>
+                  <th>事实</th>
+                  <th>关系</th>
+                  <th>分区</th>
+                  <th>状态</th>
+                  <th>生效时间</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="facts-tb"></tbody>
+            </table>
+          </div>
+
+          <div id="view-entities" class="view">
+            <div class="merge-tool">
+              <span class="dim">实体合并：</span>
+              <select id="ent-keep"></select>
+              <span class="dim">← 保留</span>
+              <select id="ent-remove"></select>
+              <span class="dim">← 移除</span>
+              <button id="btn-merge">合并</button>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>名称</th>
+                  <th>类型</th>
+                  <th>分区</th>
+                  <th>摘要</th>
+                  <th>创建时间</th>
+                </tr>
+              </thead>
+              <tbody id="entities-tb"></tbody>
+            </table>
+          </div>
+
+          <div id="view-episodes" class="view">
+            <div id="episodes-list"></div>
+          </div>
+
+          <div id="view-quality" class="view">
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                margin: 4px 0 8px;
+              "
+            >
+              <h3 class="dim" style="margin: 0">实体合并候选</h3>
+              <button
+                id="dedup-btn"
+                class="row-btn"
+                title="自动合并同名/分隔符/路径/域名/中英对照的安全候选，误报已排除。人工候选不受影响。"
+              >
+                一键合并安全候选
+              </button>
+            </div>
+            <table>
+              <thead>
+                <tr>
+                  <th>保留</th>
+                  <th>移除（并入保留方）</th>
+                  <th>分区</th>
+                  <th>依据</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="merge-tb"></tbody>
+            </table>
+            <h3 class="dim" style="margin: 16px 0 8px">
+              短事实候选（人工判断）
+            </h3>
+            <table>
+              <thead>
+                <tr>
+                  <th>事实</th>
+                  <th>分区</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody id="weak-tb"></tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      "use strict";
+      const $ = (id) => document.querySelector("#" + id);
+      let GROUPS = []; // [{group_id, episodes, entities, facts}]
+      let network = null,
+        graphData = { nodes: [], edges: [] };
+      const epCache = new Map(); // episode uuid → episode json
+
+      const curGroup = () => $("group").value || "all";
+      const isAll = () => curGroup() === "all";
+      const gid = (g) => encodeURIComponent(g ?? curGroup());
+
+      function fmt(t) {
+        return t ? t.replace("T", " ").slice(0, 19) : "-";
+      }
+
+      // 分区名 → 稳定色相（全部视图分色用）
+      function hueOf(s) {
+        let h = 0;
+        for (const c of String(s)) h = (h * 31 + c.codePointAt(0)) >>> 0;
+        return h % 360;
+      }
+      // hsl → hex：全部模式的分区色也要能走 withAlpha 做边框透明度分层
+      function hslHex(h, s, l) {
+        s /= 100;
+        l /= 100;
+        const a = s * Math.min(l, 1 - l);
+        const f = (n) => {
+          const k = (n + h / 30) % 12;
+          return l - a * Math.max(-1, Math.min(k - 3, 9 - k, 1));
+        };
+        const to = (x) =>
+          Math.round(255 * x)
+            .toString(16)
+            .padStart(2, "0");
+        return "#" + to(f(0)) + to(f(8)) + to(f(4));
+      }
+      function groupColor(g) {
+        return hslHex(hueOf(g), 55, 55);
+      }
+      function gBadge(g) {
+        const b = el("span", { class: "g-badge", text: g });
+        b.style.borderColor = groupColor(g);
+        b.style.color = groupColor(g);
+        return b;
+      }
+
+      // 极简 DOM 构造器：所有文本走 textContent，杜绝 XSS
+      function el(tag, props, ...kids) {
+        const n = document.createElement(tag);
+        if (props)
+          for (const [k, v] of Object.entries(props)) {
+            if (k === "class") n.className = v;
+            else if (k === "text") n.textContent = v;
+            else if (k.startsWith("on")) n.addEventListener(k.slice(2), v);
+            else if (v != null) n.setAttribute(k, v);
+          }
+        for (const k of kids) if (k) n.append(k);
+        return n;
+      }
+      function clear(node) {
+        while (node.firstChild) node.removeChild(node.firstChild);
+      }
+
+      async function api(path, opts) {
+        const r = await fetch(path, opts);
+        if (!r.ok) throw new Error(path + " → " + r.status);
+        return r.json();
+      }
+
+      // ── 分区管理 ─────────────────────────────────────────
+      async function loadGroups() {
+        const d = await api("/api/groups");
+        GROUPS = d.groups;
+        const sel = $("group");
+        clear(sel);
+        const totEp = GROUPS.reduce((s, g) => s + g.episodes, 0);
+        sel.append(el("option", { value: "all", text: `全部（${totEp}）` }));
+        for (const g of GROUPS) {
+          sel.append(
+            el("option", {
+              value: g.group_id,
+              text: `${g.group_id}（${g.episodes}）`,
+            }),
+          );
+        }
+        const saved = localStorage.getItem("yinor-group");
+        sel.value =
+          saved && [...sel.options].some((o) => o.value === saved)
+            ? saved
+            : "default";
+      }
+
+      async function loadStats() {
+        const s = isAll()
+          ? await api("/stats")
+          : await api("/stats?group_id=" + gid());
+        $("st-ep").textContent = s.episodes;
+        $("st-en").textContent = s.entities;
+        $("st-fa").textContent = s.facts;
+        $("st-act").textContent = s.active_facts;
+      }
+
+      // ── 图谱 ─────────────────────────────────────────────
+      let showIsolated = false,
+        showEdgeLabels = false;
+
+      // 类型色板（参考 Suey ConceptGraph v2）：深色填充保持克制，颜色只出现在边框上
+      const TYPE_COLOR = {
+        Concept: "#4c8cff",
+        Tool: "#34d399",
+        Project: "#4ec9b0",
+        Person: "#a78bfa",
+        Document: "#e3b341",
+        Event: "#f0883e",
+        Preference: "#f778ba",
+        Procedure: "#79c0ff",
+        Organization: "#d2a8ff",
+        Location: "#8b919e",
+      };
+      const TYPE_FALLBACK = "#8b919e";
+
+      function typeColor(labels) {
+        for (const l of labels || []) if (TYPE_COLOR[l]) return TYPE_COLOR[l];
+        return TYPE_FALLBACK;
+      }
+
+      /** hsl / hex 颜色加透明度；hsl 串直接转 rgba 需解析，这里只接 hex */
+      function withAlpha(hex, a) {
+        if (hex[0] !== "#") return hex;
+        const n = parseInt(hex.slice(1), 16);
+        return (
+          "rgba(" +
+          ((n >> 16) & 255) +
+          ", " +
+          ((n >> 8) & 255) +
+          ", " +
+          (n & 255) +
+          ", " +
+          a +
+          ")"
+        );
+      }
+
+      // 度数分级（参考 Suey tierOf）：核心醒目 / 普通常规 / 叶子淡出，边框 alpha 分层
+      function tierOf(dgr) {
+        if (dgr >= 6) return { size: 13, width: 2, alpha: 1, text: "#eaf0ff" };
+        if (dgr <= 1)
+          return { size: 11, width: 1, alpha: 0.35, text: "#9aa0ab" };
+        return { size: 12, width: 1.5, alpha: 0.7, text: "#d7dae0" };
+      }
+
+      // 类型锚点（参考 Suey forceX/forceY 聚簇）：同类节点初始落在同一区域，物理引擎再微调
+      const TYPE_ANCHOR = {
+        Concept: [-450, -50],
+        Tool: [350, -250],
+        Project: [480, 80],
+        Document: [200, 380],
+        Person: [-300, -380],
+        Event: [-80, 420],
+        Organization: [-550, -320],
+        Location: [-550, 250],
+      };
+
+      function anchorPos(labels, id) {
+        let a = [0, 0];
+        for (const l of labels || []) {
+          if (TYPE_ANCHOR[l]) {
+            a = TYPE_ANCHOR[l];
+            break;
+          }
+        }
+        let h = 0;
+        for (let i = 0; i < id.length; i++) h = (h * 31 + id.charCodeAt(i)) | 0;
+        return [a[0] + (h % 240) - 120, a[1] + ((h >> 9) % 240) - 120];
+      }
+
+      async function loadGraph() {
+        graphData = await api("/api/graph?group_id=" + gid());
+        buildGraph();
+      }
+
+      function buildGraph() {
+        const colored = isAll();
+        const deg = {};
+        for (const e of graphData.edges) {
+          deg[e.from] = (deg[e.from] || 0) + 1;
+          deg[e.to] = (deg[e.to] || 0) + 1;
+        }
+        const total = graphData.nodes.length;
+        const hideIso = !showIsolated && total > 30;
+        let isoCount = 0;
+
+        // 大图防卡死：节点超 CAP 时按度数取 top CAP 渲染。
+        // 3000+ 节点时 forceAtlas2Based stabilization 跑不完 → 画布永远空白（实测 3002 实体白屏）；
+        // hidden 节点仍参与物理模拟，必须不入 DataSet。
+        const CAP = 600;
+        let keep = null;
+        if (total > CAP) {
+          const byDeg = [...graphData.nodes].sort(
+            (a, b) => (deg[b.id] || 0) - (deg[a.id] || 0),
+          );
+          keep = new Set(byDeg.slice(0, CAP).map((n) => n.id));
+        }
+        const nodes = new vis.DataSet(
+          graphData.nodes
+            .map((n) => {
+              if (keep && !keep.has(n.id)) return null;
+              const dgr = deg[n.id] || 0;
+              const hidden = hideIso && dgr === 0;
+              if (hidden) isoCount++;
+            const accent = colored ? groupColor(n.group) : typeColor(n.labels);
+            const tier = tierOf(dgr);
+            const [ax, ay] = anchorPos(n.labels, n.id);
+            return {
+              id: n.id,
+              x: ax,
+              y: ay,
+              mass: 1 + dgr * 0.2, // 枢纽更重：位置更稳、斥力更强
+              label: n.label.length > 16 ? n.label.slice(0, 15) + "…" : n.label,
+              // 不传 title——避免悬停弹 tooltip（详情走点击抽屉，读 graphData）
+              labels: n.labels,
+              hidden,
+              // 注意：不能传 group 字段——vis 的 Groups 机制会给未知组分配默认色，
+              // 且任何不含 color 的后续 update 都会被组色整个覆盖（v9.1.9 Node.js 已验证）
+              shape: "box",
+              margin: 8,
+              color: {
+                background: "#1a2332",
+                border: withAlpha(accent, tier.alpha),
+                highlight: { background: "#262a32", border: accent },
+                hover: { background: "#262a32", border: accent },
+              },
+              font: {
+                color: tier.text,
+                size: tier.size,
+              },
+              borderWidth: tier.width,
+              shapeProperties: { borderRadius: 5 },
+              shadow:
+                dgr >= 6
+                  ? {
+                      enabled: true,
+                      color: withAlpha(accent, 0.35),
+                      size: 12,
+                      x: 0,
+                      y: 0,
+                    }
+                  : { enabled: false },
+              opacity: dgr === 0 ? 0.45 : 1,
+            };
+            })
+            .filter(Boolean),
+        );
+        // 边/链接同步过滤：两端都在保留集内才渲染（孤端边会让 vis 报不存在节点）
+        const keptEdges = graphData.edges.filter(
+          (e) => !keep || (keep.has(e.from) && keep.has(e.to)),
+        );
+        const keptLinks = (graphData.links || []).filter(
+          (l) => !keep || (keep.has(l.from) && keep.has(l.to)),
+        );
+        const edges = new vis.DataSet([
+          ...keptEdges.map((e) => ({
+            id: e.id,
+            from: e.from,
+            to: e.to,
+            label: showEdgeLabels ? e.label : undefined,
+            active: e.active,
+            group: e.group,
+            arrows: { to: { enabled: true, scaleFactor: 0.5 } },
+            color: {
+              color: e.active
+                ? "rgba(255, 255, 255, 0.14)"
+                : "rgba(255, 255, 255, 0.05)",
+              highlight: "rgba(255, 255, 255, 0.55)",
+              hover: "rgba(255, 255, 255, 0.4)",
+            },
+            width: 1,
+            selectionWidth: 2,
+            font: {
+              color: "#8b919e",
+              size: 10,
+              strokeWidth: 2,
+              strokeColor: "#1b1d23",
+            },
+            dashes: !e.active,
+            smooth: { type: "curvedCW", roundness: 0.12 },
+          })),
+          // same_as 跨分区同一性链接：紫色虚线、无箭头，与事实边视觉区分
+          ...keptLinks.map((l) => ({
+            id: `link-${l.from}-${l.to}`,
+            from: l.from,
+            to: l.to,
+            label: showEdgeLabels ? "same_as" : undefined,
+            color: {
+              color: "rgba(167, 139, 250, 0.35)",
+              highlight: "rgba(167, 139, 250, 0.8)",
+              hover: "rgba(167, 139, 250, 0.6)",
+            },
+            width: 1,
+            selectionWidth: 2,
+            dashes: [6, 4],
+            font: {
+              color: "#a78bfa",
+              size: 9,
+              strokeWidth: 2,
+              strokeColor: "#1b1d23",
+            },
+            smooth: { type: "curvedCW", roundness: 0.2 },
+          })),
+        ]);
+        if (network) network.destroy();
+        const renderedCount = nodes.length;
+        network = new vis.Network(
+          $("graph"),
+          { nodes, edges },
+          {
+            physics: {
+              solver: "forceAtlas2Based",
+              forceAtlas2Based: {
+                gravitationalConstant: -38,
+                centralGravity: 0.03,
+                springLength: 115,
+                springConstant: 0.05,
+                damping: 0.5,
+                avoidOverlap: 1,
+              },
+              // 自适应：大图减迭代，600 节点×600 轮会卡数十秒
+              stabilization: {
+                iterations: renderedCount > 300 ? 150 : 600,
+                updateInterval: 50,
+              },
+            },
+            interaction: {
+              hover: true,
+              tooltipDelay: 150,
+              hideEdgesOnDrag: true,
+              dragNodes: false,
+            },
+          },
+        );
+        network.on("stabilizationIterationsDone", () => {
+          network.setOptions({ physics: { enabled: false } });
+          network.fit({
+            animation: { duration: 400, easingFunction: "easeInOutQuad" },
+          });
+        });
+        network.on("click", (p) => {
+          if (p.nodes.length) showNodeDetail(p.nodes[0]);
+          else if (p.edges.length) showEdgeDetail(p.edges[0]);
+          else hideDetail();
+        });
+        // 悬停聚焦（参考 Suey ConceptGraph）：当前节点及邻居保持，其余淡出
+        const adj = {};
+        for (const e of graphData.edges) {
+          (adj[e.from] = adj[e.from] || new Set()).add(e.to);
+          (adj[e.to] = adj[e.to] || new Set()).add(e.from);
+        }
+        const baseNodeOpacity = {};
+        for (const n of nodes.get()) baseNodeOpacity[n.id] = n.opacity ?? 1;
+        const baseNodeFont = {};
+        for (const n of nodes.get()) baseNodeFont[n.id] = n.font.color;
+        const baseEdgeColor = {};
+        for (const e of edges.get()) baseEdgeColor[e.id] = e.color.color;
+        network.on("hoverNode", (p) => {
+          const focus = new Set([p.node, ...(adj[p.node] || [])]);
+          nodes.update(
+            nodes.get().map((n) => ({
+              id: n.id,
+              opacity: focus.has(n.id) ? baseNodeOpacity[n.id] : 0.22,
+              font: {
+                color: focus.has(n.id)
+                  ? baseNodeFont[n.id]
+                  : "rgba(154, 160, 171, 0.22)",
+              },
+            })),
+          );
+          edges.update(
+            edges.get().map((e) => {
+              const on = e.from === p.node || e.to === p.node;
+              return {
+                id: e.id,
+                color: {
+                  color: on
+                    ? "rgba(255, 255, 255, 0.55)"
+                    : "rgba(255, 255, 255, 0.03)",
+                },
+              };
+            }),
+          );
+        });
+        network.on("blurNode", () => {
+          nodes.update(
+            nodes.get().map((n) => ({
+              id: n.id,
+              opacity: baseNodeOpacity[n.id],
+              font: { color: baseNodeFont[n.id] },
+            })),
+          );
+          edges.update(
+            edges.get().map((e) => ({
+              id: e.id,
+              color: { color: baseEdgeColor[e.id] },
+            })),
+          );
+        });
+        $("iso-count").textContent =
+          hideIso && isoCount ? `（已隐藏 ${isoCount}）` : "";
+        $("graph-count").textContent = keep
+          ? `节点 ${renderedCount}/${total}（按连接数取前 ${CAP}） · 关系 ${keptEdges.length}/${graphData.edges.length}`
+          : `节点 ${total} · 关系 ${graphData.edges.length}`;
+        renderGraphIdle(colored);
+      }
+
+      function openDetail() {
+        $("detail").classList.add("open");
+        $("detail-close").style.display = "block";
+      }
+      function hideDetail() {
+        $("detail").classList.remove("open");
+        $("detail-close").style.display = "none";
+      }
+
+      function renderGraphIdle(colored) {
+        hideDetail();
+        const d = $("graph-legend");
+        clear(d);
+        if (graphData.nodes.length === 0) {
+          d.append(
+            el("div", {
+              text: "当前分区还没有数据，通过 POST /episodes 写入记忆试试",
+            }),
+          );
+          return;
+        }
+        // 图例：全部模式按分区分色，单组模式按实体类型分色
+        let title = "类型图例";
+        let entries = [];
+        if (colored) {
+          title = "分区图例";
+          entries = [...new Set(graphData.nodes.map((n) => n.group))].map(
+            (g) => [g, groupColor(g)],
+          );
+        } else {
+          const counts = {};
+          for (const n of graphData.nodes) {
+            const t = (n.labels || []).find((l) => TYPE_COLOR[l]) || "其他";
+            counts[t] = (counts[t] || 0) + 1;
+          }
+          entries = Object.keys(counts)
+            .sort((a, b) => counts[b] - counts[a])
+            .map((t) => [
+              t + " " + counts[t],
+              t === "其他" ? TYPE_FALLBACK : TYPE_COLOR[t],
+            ]);
+        }
+        const lg = el("div", { class: "legend" }, el("div", { text: title }));
+        for (const [name, color] of entries) {
+          const dot = el("span", { class: "legend-dot" });
+          dot.style.background = color;
+          lg.append(el("div", null, dot, name));
+        }
+        d.append(lg);
+      }
+
+      function nameOf(u) {
+        const n = graphData.nodes.find((x) => x.id === u);
+        return n ? n.label : String(u).slice(0, 8) + "…";
+      }
+
+      // 溯源条目：按 uuid 取 episode（带缓存）
+      async function provItem(u) {
+        let ep = epCache.get(u);
+        if (!ep) {
+          ep = await api("/episodes/" + encodeURIComponent(u));
+          epCache.set(u, ep);
+        }
+        return el(
+          "div",
+          { class: "prov-item" },
+          el(
+            "div",
+            null,
+            el("span", { class: "chip", text: ep.source || "?" }),
+            " ",
+            el("span", {
+              class: "dim",
+              text: fmt(ep.valid_at || ep.created_at),
+            }),
+          ),
+          el("div", {
+            class: "dim",
+            text:
+              (ep.content || "").slice(0, 200) +
+              (ep.content && ep.content.length > 200 ? "…" : ""),
+          }),
+        );
+      }
+
+      async function showNodeDetail(id) {
+        const n = graphData.nodes.find((x) => x.id === id);
+        if (!n) return;
+        const d = $("detail");
+        clear(d);
+        openDetail();
+        d.append(el("h3", { text: n.label }, isAll() ? gBadge(n.group) : null));
+        d.append(
+          n.labels.length
+            ? el(
+                "div",
+                null,
+                ...n.labels.map((l) => el("span", { class: "lbl", text: l })),
+              )
+            : el("span", { class: "dim", text: "无类型标签" }),
+        );
+        d.append(el("div", { class: "sec", text: "摘要" }));
+        d.append(el("div", { text: n.title || "（空）" }));
+        const related = graphData.edges.filter(
+          (e) => e.from === id || e.to === id,
+        );
+        d.append(
+          el("div", { class: "sec", text: `相关事实（${related.length}）` }),
+        );
+        for (const e of related) {
+          d.append(
+            el(
+              "div",
+              { class: "fact-item" },
+              el("div", {
+                text: `${nameOf(e.from)} —${e.label}→ ${nameOf(e.to)}`,
+              }),
+              el("div", { class: "dim", text: e.title }),
+            ),
+          );
+        }
+        // 演变史：该实体相关事实的时间线（含已失效/已删除）
+        d.append(el("div", { class: "sec", text: "演变史" }));
+        const hd = el(
+          "div",
+          null,
+          el("div", { class: "dim", text: "加载中…" }),
+        );
+        d.append(hd);
+        try {
+          const h = await api(
+            `/history?entity=${encodeURIComponent(n.label)}&group_id=${gid(n.group)}&limit=30`,
+          );
+          clear(hd);
+          if (!h.facts.length) {
+            hd.append(el("div", { class: "dim", text: "无历史记录" }));
+          }
+          for (const f of h.facts) {
+            let cls = "h-on",
+              st = "有效";
+            if (f.expired_at) {
+              cls = "h-off";
+              st = "已删除";
+            } else if (f.invalid_at) {
+              cls = "h-exp";
+              st = "已失效";
+            }
+            hd.append(
+              el(
+                "div",
+                { class: "hist-item " + cls },
+                el("div", { text: f.fact }),
+                el("div", {
+                  class: "dim",
+                  text: `${st} · ${fmt(f.valid_at)} → ${f.invalid_at ? fmt(f.invalid_at) : "至今"}`,
+                }),
+              ),
+            );
+          }
+        } catch (err) {
+          clear(hd);
+          hd.append(
+            el("div", { class: "dim", text: "加载失败：" + err.message }),
+          );
+        }
+      }
+
+      async function showEdgeDetail(id) {
+        const e = graphData.edges.find((x) => x.id === id);
+        if (!e) return;
+        const d = $("detail");
+        clear(d);
+        openDetail();
+        d.append(el("h3", { text: e.label }, isAll() ? gBadge(e.group) : null));
+        d.append(el("div", { text: `${nameOf(e.from)} → ${nameOf(e.to)}` }));
+        d.append(el("div", { class: "sec", text: "事实" }));
+        d.append(el("div", { class: "fact-item", text: e.title }));
+        d.append(el("div", { class: "sec", text: "状态" }));
+        d.append(
+          el("div", {
+            class: e.active ? "st-on" : "st-exp",
+            text: e.active ? "✓ 当前有效" : "✗ 已失效（被更新的事实取代）",
+          }),
+        );
+        // 溯源：查该事实的 episodes 数组，逐条取原文
+        d.append(el("div", { class: "sec", text: "溯源（来源 episodes）" }));
+        const prov = el(
+          "div",
+          null,
+          el("div", { class: "dim", text: "加载中…" }),
+        );
+        d.append(prov);
+        try {
+          const fd = await api(
+            `/api/facts?group_id=${gid(e.group)}&include_expired=true`,
+          );
+          const f = fd.facts.find((x) => x.uuid === id);
+          clear(prov);
+          if (!f || !f.episodes.length) {
+            prov.append(el("div", { class: "dim", text: "无溯源记录" }));
+            return;
+          }
+          for (const u of f.episodes) prov.append(await provItem(u));
+        } catch (err) {
+          clear(prov);
+          prov.append(
+            el("div", { class: "dim", text: "加载失败：" + err.message }),
+          );
+        }
+      }
+
+      // ── 列表视图 ─────────────────────────────────────────
+      function emptyRow(cols, msg) {
+        return el(
+          "tr",
+          null,
+          el("td", { class: "hint", colspan: String(cols), text: msg }),
+        );
+      }
+
+      function factStatus(f) {
+        if (f.expired_at)
+          return el("span", { class: "st-off", text: "已删除" });
+        if (f.invalid_at)
+          return el("span", { class: "st-exp", text: "已失效" });
+        return el("span", { class: "st-on", text: "✓ 有效" });
+      }
+
+      async function loadFacts() {
+        const inc = $("inc-expired").checked;
+        const d = await api(
+          `/api/facts?group_id=${gid()}&include_expired=${inc}`,
+        );
+        const tb = $("facts-tb");
+        clear(tb);
+        if (!d.facts.length) {
+          tb.append(emptyRow(5, "暂无事实"));
+          return;
+        }
+        for (const f of d.facts) {
+          const st = factStatus(f);
+          const btnInv = el("button", {
+            class: "row-btn",
+            title: "手动失效（软删除）",
+            text: "失效",
+          });
+          btnInv.addEventListener("click", async (ev) => {
+            ev.stopPropagation();
+            if (!confirm("确认失效该事实？将不再出现在结果中。")) return;
+            await api(`/api/facts/${encodeURIComponent(f.uuid)}/invalidate`, {
+              method: "POST",
+            });
+            loadFacts();
+          });
+          const row = el(
+            "tr",
+            { class: "fact-row" },
+            el(
+              "td",
+              null,
+              el("div", { text: f.fact }),
+              el("div", {
+                class: "dim",
+                text: `${f.source_name} → ${f.target_name}`,
+              }),
+            ),
+            el("td", { text: f.name }),
+            el("td", null, gBadge(f.group_id)),
+            el("td", null, st),
+            el("td", { class: "dim", text: fmt(f.valid_at) }),
+            el("td", null, btnInv),
+          );
+          // 点击行：展开/收起溯源（来源 episodes 原文）
+          let provRow = null;
+          row.addEventListener("click", async () => {
+            if (provRow) {
+              provRow.remove();
+              provRow = null;
+              return;
+            }
+            const cell = el("td", { colspan: "6" });
+            provRow = el("tr", { class: "prov-row" }, cell);
+            row.after(provRow);
+            if (!f.episodes.length) {
+              cell.append(el("div", { class: "dim", text: "无溯源记录" }));
+              return;
+            }
+            cell.append(el("div", { class: "dim", text: "溯源加载中…" }));
+            try {
+              const items = [];
+              for (const u of f.episodes) items.push(await provItem(u));
+              clear(cell);
+              for (const it of items) cell.append(it);
+            } catch (err) {
+              clear(cell);
+              cell.append(
+                el("div", { class: "dim", text: "加载失败：" + err.message }),
+              );
+            }
+          });
+          tb.append(row);
+        }
+      }
+
+      async function loadEntities() {
+        const d = await api("/api/entities?group_id=" + gid());
+        const tb = $("entities-tb");
+        clear(tb);
+        // 填充合并工具下拉（仅保留时区正确：全部模式含所有组）
+        const keepSel = $("ent-keep");
+        const rmSel = $("ent-remove");
+        const prevKeep = keepSel.value,
+          prevRm = rmSel.value;
+        clear(keepSel);
+        clear(rmSel);
+        for (const e of d.entities) {
+          const optK = el("option", {
+            value: e.uuid,
+            text: `${e.name} [${e.group_id}]`,
+          });
+          keepSel.append(optK);
+          rmSel.append(optK.cloneNode(true));
+        }
+        keepSel.value = prevKeep;
+        rmSel.value = prevRm;
+        if (!d.entities.length) {
+          tb.append(emptyRow(5, "暂无实体"));
+          return;
+        }
+        for (const e of d.entities) {
+          tb.append(
+            el(
+              "tr",
+              null,
+              el(
+                "td",
+                null,
+                el("b", { text: e.name }),
+                el("div", { class: "mono", text: e.uuid.slice(0, 8) + "…" }),
+              ),
+              el(
+                "td",
+                null,
+                ...(e.labels.length
+                  ? e.labels.map((l) => el("span", { class: "lbl", text: l }))
+                  : [el("span", { class: "dim", text: "-" })]),
+              ),
+              el("td", null, gBadge(e.group_id)),
+              el("td", { text: e.summary || "（空）" }),
+              el("td", { class: "dim", text: fmt(e.created_at) }),
+            ),
+          );
+        }
+      }
+
+      async function loadEpisodes() {
+        const d = await api("/api/episodes?group_id=" + gid() + "&limit=200");
+        const list = $("episodes-list");
+        clear(list);
+        if (!d.episodes.length) {
+          list.append(el("div", { class: "hint", text: "暂无 episodes" }));
+          return;
+        }
+        for (const e of d.episodes) {
+          const content = el("div", {
+            class: "content collapsed",
+            text: e.content,
+          });
+          content.addEventListener("click", () =>
+            content.classList.toggle("collapsed"),
+          );
+          const btnDel = el("button", {
+            class: "row-btn",
+            title: "删除该 episode（连带只被它引用的事实）",
+            text: "删除",
+          });
+          btnDel.addEventListener("click", async () => {
+            if (!confirm("确认删除该 episode？其专属事实也会被删除。")) return;
+            await api(`/episodes/${encodeURIComponent(e.uuid)}`, {
+              method: "DELETE",
+            });
+            loadEpisodes();
+          });
+          list.append(
+            el(
+              "div",
+              { class: "ep-card" },
+              el(
+                "div",
+                { class: "meta" },
+                el("span", { class: "chip", text: e.source }),
+                " ",
+                el("span", { class: "dim", text: fmt(e.created_at) }),
+                gBadge(e.group_id),
+                el("span", { style: "flex:1" }),
+                btnDel,
+              ),
+              content,
+            ),
+          );
+        }
+      }
+
+      async function loadQuality() {
+        const d = await api("/api/quality?group_id=" + gid());
+        const scope = isAll() ? "全部分区" : `分区 ${curGroup()}`;
+        const autoN = d.merge_candidates.filter((c) => c.auto_merge).length;
+        const dbtn = $("dedup-btn");
+        if (dbtn) {
+          dbtn.textContent = `一键合并 ${autoN} 个安全候选`;
+          dbtn.disabled = autoN === 0;
+          dbtn.onclick = async () => {
+            if (
+              !confirm(
+                `在【${scope}】内合并 ${autoN} 个安全候选？\n同名/分隔符/路径/域名/中英对照等会自动并入，\n误报（@suey/*、~/.pi↔pi 等）已排除。\n人工候选不受影响。`,
+              )
+            )
+              return;
+            try {
+              const r = await api("/api/dedup?group_id=" + gid(), {
+                method: "POST",
+              });
+              alert(
+                `已合并 ${r.merged} 对${r.errors?.length ? `，失败 ${r.errors.length} 对` : ""}`,
+              );
+            } catch (e) {
+              alert("合并失败: " + e);
+            }
+            loadQuality();
+          };
+        }
+        const mtb = $("merge-tb");
+        clear(mtb);
+        if (!d.merge_candidates.length) mtb.append(emptyRow(5, "无合并候选"));
+        for (const c of d.merge_candidates) {
+          const btn = el("button", { class: "row-btn", text: "合并" });
+          btn.addEventListener("click", async () => {
+            if (
+              !confirm(
+                `确认把 ${c.remove_name} 并入 ${c.keep_name}？引用将全部重写。`,
+              )
+            )
+              return;
+            await api("/api/entities/merge", {
+              method: "POST",
+              body: JSON.stringify({
+                keep: c.keep_uuid,
+                remove: c.remove_uuid,
+              }),
+            });
+            loadQuality();
+          });
+          mtb.append(
+            el(
+              "tr",
+              null,
+              el("td", null, el("b", { text: c.keep_name })),
+              el("td", { text: c.remove_name }),
+              el("td", null, gBadge(c.group_id)),
+              el("td", {
+                class: "dim",
+                title: c.auto_merge
+                  ? `自动合并：${c.auto_reason}`
+                  : "需人工判断（可能误报）",
+                text: c.auto_merge
+                  ? `✓自动 ${c.reason}${c.similarity < 1 ? " " + c.similarity : ""}`
+                  : `☐人工 ${c.reason}${c.similarity < 1 ? " " + c.similarity : ""}`,
+              }),
+              el("td", null, btn),
+            ),
+          );
+        }
+        const wtb = $("weak-tb");
+        clear(wtb);
+        if (!d.weak_facts.length) wtb.append(emptyRow(3, "无短事实候选"));
+        for (const f of d.weak_facts) {
+          const btn = el("button", { class: "row-btn", text: "失效" });
+          btn.addEventListener("click", async () => {
+            await api(`/api/facts/${encodeURIComponent(f.uuid)}/invalidate`, {
+              method: "POST",
+            });
+            loadQuality();
+          });
+          wtb.append(
+            el(
+              "tr",
+              null,
+              el(
+                "td",
+                null,
+                el("div", { text: f.fact }),
+                el("div", {
+                  class: "dim",
+                  text: `${f.source_name} → ${f.target_name}`,
+                }),
+              ),
+              el("td", null, gBadge(f.group_id)),
+              el("td", null, btn),
+            ),
+          );
+        }
+      }
+
+      // ── 搜索（三段：事实 / 实体 / 原文）────────────────────
+      async function doSearch() {
+        const q = $("q").value.trim();
+        if (!q) return;
+        const box = $("search-results");
+        clear(box);
+        box.style.display = "block";
+        box.append(el("div", { class: "dim", text: "搜索中…" }));
+        try {
+          // 全部模式：逐分区查询后按 uuid 合并（与扩展端 searchMerged 同思路）
+          const groups = isAll() ? GROUPS.map((g) => g.group_id) : [curGroup()];
+          const fetched = await Promise.all(
+            groups.map((g) =>
+              api(
+                `/search?q=${encodeURIComponent(q)}&group_id=${encodeURIComponent(g)}&limit=10`,
+              ).then((d) => ({ g, d })),
+            ),
+          );
+          const facts = [],
+            entities = [],
+            episodes = [];
+          const seenF = new Set(),
+            seenE = new Set(),
+            seenP = new Set();
+          let elapsed = 0;
+          for (const { g, d } of fetched) {
+            elapsed = Math.max(elapsed, d.elapsed_ms);
+            for (const f of d.facts)
+              if (!seenF.has(f.uuid)) {
+                seenF.add(f.uuid);
+                facts.push({ ...f, _g: g });
+              }
+            for (const e of d.entities || [])
+              if (!seenE.has(e.uuid)) {
+                seenE.add(e.uuid);
+                entities.push({ ...e, _g: g });
+              }
+            for (const p of d.episodes || [])
+              if (!seenP.has(p.uuid)) {
+                seenP.add(p.uuid);
+                episodes.push({ ...p, _g: g });
+              }
+          }
+          facts.sort((a, b) => b.score - a.score);
+          entities.sort((a, b) => b.score - a.score);
+          episodes.sort((a, b) => b.score - a.score);
+
+          clear(box);
+          box.append(
+            el("div", {
+              class: "dim",
+              text: `「${q}」事实 ${facts.length} / 实体 ${entities.length} / 原文 ${episodes.length}（${elapsed.toFixed(0)}ms）`,
+            }),
+          );
+          if (!facts.length && !entities.length && !episodes.length) {
+            box.append(el("div", { class: "hint", text: "无结果" }));
+            return;
+          }
+          if (facts.length) {
+            box.append(
+              el("div", { class: "sr-sec", text: `事实（${facts.length}）` }),
+            );
+            for (const f of facts) {
+              box.append(
+                el(
+                  "div",
+                  { class: "sr-item" },
+                  el("span", {
+                    class: "score",
+                    text: (f.score ?? 0).toFixed(3),
+                  }),
+                  el("b", { text: f.fact }, isAll() ? gBadge(f._g) : null),
+                  el("br"),
+                  el("span", {
+                    class: "dim",
+                    text: `${f.source_name || ""} —${f.name}→ ${f.target_name || ""}`,
+                  }),
+                ),
+              );
+            }
+          }
+          if (entities.length) {
+            box.append(
+              el("div", {
+                class: "sr-sec",
+                text: `实体（${entities.length}）`,
+              }),
+            );
+            for (const e of entities) {
+              box.append(
+                el(
+                  "div",
+                  { class: "sr-item ent" },
+                  el("span", {
+                    class: "score",
+                    text: (e.score ?? 0).toFixed(3),
+                  }),
+                  el("b", { text: e.name }, isAll() ? gBadge(e._g) : null),
+                  " ",
+                  ...(e.labels || []).map((l) =>
+                    el("span", { class: "lbl", text: l }),
+                  ),
+                  el("div", { class: "dim", text: e.summary || "" }),
+                ),
+              );
+            }
+          }
+          if (episodes.length) {
+            box.append(
+              el("div", {
+                class: "sr-sec",
+                text: `原文（${episodes.length}）`,
+              }),
+            );
+            for (const p of episodes) {
+              box.append(
+                el(
+                  "div",
+                  { class: "sr-item ep" },
+                  el("span", {
+                    class: "score",
+                    text: (p.score ?? 0).toFixed(3),
+                  }),
+                  el("span", { class: "chip", text: p.source || "?" }),
+                  " ",
+                  el("span", {
+                    class: "dim",
+                    text: fmt(p.valid_at || p.created_at),
+                  }),
+                  isAll() ? gBadge(p._g) : null,
+                  el("div", { text: p.content || "" }),
+                ),
+              );
+            }
+          }
+        } catch (err) {
+          clear(box);
+          box.append(
+            el("div", { class: "hint", text: "搜索失败：" + err.message }),
+          );
+        }
+      }
+
+      function clearSearch() {
+        $("q").value = "";
+        $("search-results").style.display = "none";
+      }
+
+      // ── 导航与事件 ───────────────────────────────────────
+      function switchTab(v) {
+        document
+          .querySelectorAll(".nav-item")
+          .forEach((t) => t.classList.toggle("active", t.dataset.v === v));
+        document
+          .querySelectorAll(".view")
+          .forEach((x) => x.classList.remove("active"));
+        $("view-" + v).classList.add("active");
+        if (v === "graph") loadGraph();
+        else if (v === "facts") loadFacts();
+        else if (v === "entities") loadEntities();
+        else if (v === "episodes") loadEpisodes();
+        else if (v === "quality") loadQuality();
+      }
+
+      function activeTab() {
+        const t = document.querySelector(".nav-item.active");
+        return t ? t.dataset.v : "graph";
+      }
+
+      function reloadAll() {
+        clearSearch();
+        loadStats();
+        switchTab(activeTab());
+      }
+
+      // 事件绑定（不用内联 onclick，与 XSS 规则保持一致风格）
+      document
+        .querySelectorAll(".nav-item")
+        .forEach((t) =>
+          t.addEventListener("click", () => switchTab(t.dataset.v)),
+        );
+      $("group").addEventListener("change", () => {
+        localStorage.setItem("yinor-group", curGroup());
+        reloadAll();
+      });
+      $("btn-refresh").addEventListener("click", () => {
+        loadGroups().then(reloadAll);
+      });
+      $("btn-search").addEventListener("click", doSearch);
+      $("btn-clear").addEventListener("click", clearSearch);
+      $("q").addEventListener("keydown", (e) => {
+        if (e.key === "Enter") doSearch();
+      });
+      $("inc-expired").addEventListener("change", loadFacts);
+      $("btn-merge").addEventListener("click", async () => {
+        const keep = $("ent-keep").value,
+          remove = $("ent-remove").value;
+        if (!keep || !remove || keep === remove) {
+          alert("请选择两个不同的实体");
+          return;
+        }
+        if (
+          !confirm(
+            `确认合并？${$("ent-remove").selectedOptions[0]?.text} 将被合并进 ${$("ent-keep").selectedOptions[0]?.text}，其引用全部重写后删除。`,
+          )
+        )
+          return;
+        const r = await api("/api/entities/merge", {
+          method: "POST",
+          body: JSON.stringify({ keep, remove }),
+        });
+        alert(
+          `合并完成：重写事实 ${r.facts_rewritten} 条、提及 ${r.mentions_rewritten} 条`,
+        );
+        loadEntities();
+        loadGraph();
+      });
+      $("btn-fit").addEventListener("click", () => {
+        if (network) network.fit({ animation: { duration: 300 } });
+      });
+      $("btn-relayout").addEventListener("click", () => {
+        if (!network) return;
+        network.setOptions({ physics: { enabled: true } });
+        network.stabilize(250);
+      });
+      $("tgl-iso").addEventListener("change", (e) => {
+        showIsolated = e.target.checked;
+        buildGraph();
+      });
+      $("tgl-elabel").addEventListener("change", (e) => {
+        showEdgeLabels = e.target.checked;
+        buildGraph();
+      });
+
+      // ── 侧栏折叠（状态记忆）──
+      const sidebar = document.querySelector(".sidebar");
+      const btnCollapse = $("btn-collapse");
+      const setCollapsed = (on) => {
+        sidebar.classList.toggle("collapsed", on);
+        btnCollapse.textContent = on ? "»" : "«";
+        localStorage.setItem("yinor-sidebar", on ? "1" : "0");
+      };
+      setCollapsed(localStorage.getItem("yinor-sidebar") === "1");
+      const toggleSidebar = () =>
+        setCollapsed(!sidebar.classList.contains("collapsed"));
+      $("logo").addEventListener("click", toggleSidebar);
+      btnCollapse.addEventListener("click", toggleSidebar);
+      $("detail-close").addEventListener("click", hideDetail);
+
+      loadGroups()
+        .then(reloadAll)
+        .catch((e) => {
+          const d = $("detail");
+          clear(d);
+          openDetail();
+          d.append(
+            el("div", { class: "placeholder", text: "加载失败：" + e.message }),
+          );
+        });
+    </script>
+  </body>
+</html>

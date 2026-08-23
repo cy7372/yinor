@@ -1,0 +1,49 @@
+[project]
+name = "yinor"
+version = "0.1.0"
+description = "印·Yinor — 自研时序知识图谱记忆系统（SQLite+FTS5 存储，LLM 提取，混合检索）"
+readme = "README.md"
+license = { text = "MIT" }
+authors = [{ name = "cy7372" }]
+requires-python = ">=3.11"
+keywords = ["memory", "knowledge-graph", "llm", "agents", "sqlite", "fts5"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+]
+dependencies = [
+    "fastapi>=0.110",
+    "uvicorn>=0.29",
+    "httpx>=0.27",
+    "pydantic>=2.6",
+    "numpy>=1.26",
+    "python-dotenv>=1.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/cy7372/yinor"
+Changelog = "https://github.com/cy7372/yinor/blob/main/CHANGELOG.md"
+
+[project.scripts]
+yinor = "yinor.cli:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+# 纯 Python 包；schema.sql 与 static/ 随包分发
+packages = ["yinor"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+ignore = ["E501"]
