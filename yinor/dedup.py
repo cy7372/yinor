@@ -28,7 +28,7 @@ _PATHISH = re.compile(r"[\\/]|[a-z]:|^[~.].*[/\\]")
 _SCOPED_PKG = re.compile(r"^@[^/]+/([^/]+)$")
 # 形似域名：xxx.yy（2+ 位 TLD），无空格无路径符
 _DOMAINISH = re.compile(r"^[a-z0-9.-]{1,63}\.[a-z]{2,}$", re.IGNORECASE)
-# 全分隔符（用于 alnum 比较：cy-router ≡ cyrouter）
+# 全分隔符（用于 alnum 比较：my-app ≡ myapp）
 _SEP = re.compile(r"[-_.\\/\s]")
 
 
@@ -231,7 +231,7 @@ def find_candidates(
             )
 
         # ② alnum 确定性同名（零向量成本：分隔符差异但对子向量分略低于阈值时，
-        #    ①③两条通道都会漏——实测 cy-router↔cyRouter sim=0.869 被 0.88 阈值挡在门外）
+        #    ①③两条通道都会漏——曾有相似对 sim=0.869 被 0.88 阈值挡在门外的案例）
         by_alnum: dict[str, list[str]] = {}
         for e in ents:
             by_alnum.setdefault(alnum_only(e.name), []).append(e.uuid)

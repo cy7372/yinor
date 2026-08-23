@@ -51,9 +51,7 @@ class LLMClient:
         timeout: float = 120.0,
     ):
         self.base_url = base_url.rstrip("/")
-        self.api_key = api_key or os.environ.get("LLM_API_KEY") or os.environ.get(
-            "CYROUTER_API_KEY"  # 兼容旧变量名
-        )
+        self.api_key = api_key or os.environ.get("LLM_API_KEY")
         if not self.api_key:
             raise LLMError("缺少 LLM_API_KEY 环境变量（或传入 api_key）")
         self.model = model

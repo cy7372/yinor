@@ -40,18 +40,9 @@ node_modules/
 dist/
 .venv/
 
-# local-only：不进仓库/release（git rm --cached 保留本地）
+# local-only
 AGENTS.md
-graphiti/
 logs/
-data/migrated_*.txt
-mm_export_raw.txt
-migrate_*.py
-run_graphiti.py
-eval_inject.py
-backfill_episode_embeddings.py
-start_yinor.sh
-servy_yinor.json
 __pycache__/
 *.pyc
 .pytest_cache/

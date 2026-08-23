@@ -875,7 +875,7 @@
         );
       }
 
-      // 度数分级（参考 Suey tierOf）：核心醒目 / 普通常规 / 叶子淡出，边框 alpha 分层
+      // 度数分级：核心醒目 / 普通常规 / 叶子淡出，边框 alpha 分层
       function tierOf(dgr) {
         if (dgr >= 6) return { size: 13, width: 2, alpha: 1, text: "#eaf0ff" };
         if (dgr <= 1)
@@ -883,7 +883,7 @@
         return { size: 12, width: 1.5, alpha: 0.7, text: "#d7dae0" };
       }
 
-      // 类型锚点（参考 Suey forceX/forceY 聚簇）：同类节点初始落在同一区域，物理引擎再微调
+      // 类型锚点（同类聚簇）：同类节点初始落在同一区域，物理引擎再微调
       const TYPE_ANCHOR = {
         Concept: [-450, -50],
         Tool: [350, -250],
@@ -1086,7 +1086,7 @@
           else if (p.edges.length) showEdgeDetail(p.edges[0]);
           else hideDetail();
         });
-        // 悬停聚焦（参考 Suey ConceptGraph）：当前节点及邻居保持，其余淡出
+        // 悬停聚焦：当前节点及邻居保持，其余淡出
         const adj = {};
         for (const e of graphData.edges) {
           (adj[e.from] = adj[e.from] || new Set()).add(e.to);

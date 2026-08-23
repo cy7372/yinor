@@ -30,7 +30,7 @@ servy_yinor.example.json   # Windows 服务注册示例（路径需替换）
 INSTALL.md / README.md
 ```
 
-若从源机器手动拷贝：**不要带** `.venv/`、`graphiti/`（若有）、`logs/`、`data/`（除非迁移记忆，见第 5 节）、`__pycache__/`。
+若从源机器手动拷贝：**不要带** `.venv/`、`logs/`、`data/`（除非迁移记忆，见第 5 节）、`__pycache__/`。
 
 ## 2. 建环境、装依赖
 
