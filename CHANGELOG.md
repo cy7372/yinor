@@ -6,6 +6,25 @@
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-08-23
+
+### 新增
+
+- **时间感知检索**：查询中的时间表达（"八月中旬"/"8月14日"/"上个月"/"最近"/ISO 日期）自动解析成时间窗口，窗口内记忆加权（默认开启，零额外成本）
+- **LLM 二段重排**：RRF 候选池经 LLM 相关度精排（0-10 评分），解决"话题相近但答非所问"的噪音；默认关闭，`/search?rerank=true` / `Searcher(rerank=True)` / `YINOR_RERANK=1` 按需开启（单次 +5~12s 延迟）
+- **检索评测体系**（`eval/`）：黄金评测集 + 回放脚本，输出 HitRate@20 / MRR / 延迟，支持 `--rerank` 对比；实测 MRR 0.482 → 0.669（+39%）
+
+### 变更
+
+- LLM API key 环境变量统一为 `LLM_API_KEY`（原 `CYROUTER_API_KEY`）
+- Web 控制台搜索默认开启重排（人工搜索延迟可容忍，质量优先）
+- README/INSTALL 精简为独立项目表述，去除外部项目引用
+
+### 修复
+
+- 控制台白屏：console.html 语法错误（多余括号）+ 大图（>600 节点）防卡死裁剪渲染
+- vis-network 的 IE 兼容残留 CSS 与 sourcemap 引用（控制台警告/404 清零）
+
 ## [0.1.0] - 2026-08-23
 
 首个公开版本。
@@ -21,5 +40,6 @@
 - **服务与集成**：FastAPI 服务（`run_server.py`）、CLI（`python -m yinor.cli`）、pi 扩展（五工具 + 会话自动上下文注入）
 - **部署**：requirements.txt 最小依赖、`.env.example` 配置模板（任意 OpenAI 兼容端点）、INSTALL.md 部署指南、Servy/systemd 常驻示例
 
-[Unreleased]: https://github.com/cy7372/yinor/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/cy7372/yinor/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/cy7372/yinor/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/cy7372/yinor/releases/tag/v0.1.0

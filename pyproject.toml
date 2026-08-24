@@ -1,6 +1,6 @@
 [project]
 name = "yinor"
-version = "0.1.0"
+version = "0.2.0"
 description = "印·Yinor — 自研时序知识图谱记忆系统（SQLite+FTS5 存储，LLM 提取，混合检索）"
 readme = "README.md"
 license = { text = "MIT" }

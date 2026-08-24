@@ -13,7 +13,7 @@ from .memory import DEFAULT_DB_PATH, Memory, fmt_search
 from .models import Episode, Fact, SearchResponse
 from .storage import Storage
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 __all__ = [
     "Memory",
