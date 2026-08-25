@@ -141,6 +141,26 @@ class Storage:
 
     # ---------- episodes ----------
 
+    def canonical_group(self, gid: str) -> str:
+        """组名大小写归一：写入时若与已有分区仅大小写不同，复用规范形式。
+
+        防止 Suey-chat/suey-chat 这类分区分裂（cwd 大小写随会话路径漂移）。
+        库小全扫成本低（<1ms/千行）；无匹配返回原值。
+        """
+        row = self.conn.execute(
+            """
+            SELECT group_id FROM (
+                SELECT group_id FROM episodes  WHERE lower(group_id)=lower(?)
+                UNION
+                SELECT group_id FROM entities  WHERE lower(group_id)=lower(?)
+                UNION
+                SELECT group_id FROM facts     WHERE lower(group_id)=lower(?)
+            ) LIMIT 1
+            """,
+            (gid, gid, gid),
+        ).fetchone()
+        return row["group_id"] if row else gid
+
     def upsert_episode(self, ep: Episode) -> None:
         self.conn.execute(
             """INSERT INTO episodes (uuid, name, group_id, source, source_description, content, created_at, valid_at)

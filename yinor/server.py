@@ -110,6 +110,8 @@ async def add_episode(req: AddEpisodeRequest) -> dict[str, Any]:
 
     mem = _memory()
     try:
+        # 组名大小写归一：与已有分区仅大小写不同时复用规范形式，防分区分裂
+        req.group_id = mem.storage.canonical_group(req.group_id)
         ep = Episode(
             name=req.name or req.content[:60],
             group_id=req.group_id,
