@@ -38,6 +38,9 @@ id_ed25519*
 *.log
 node_modules/
 dist/
+build/
+Output/
+packaging/version_info.txt
 .venv/
 
 # local-only

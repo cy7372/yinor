@@ -14,9 +14,10 @@ from typing import Any
 
 import numpy as np
 
+from .frozen import resource_path
 from .models import Entity, Episode, Fact, now_iso
 
-SCHEMA_PATH = Path(__file__).parent / "schema.sql"
+SCHEMA_PATH = resource_path("schema.sql")
 
 # CJK 字符范围（基本块+扩展A+兼容+全角），用于 FTS 预切分
 _CJK = r"\u3000-\u303f\u3400-\u4dbf\u4e00-\u9fff\uf900-\ufaff\uff00-\uffef"

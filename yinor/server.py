@@ -23,7 +23,6 @@ import asyncio
 import logging
 import os
 from datetime import UTC, datetime
-from pathlib import Path
 from typing import Any
 
 from dotenv import load_dotenv
@@ -31,14 +30,15 @@ from fastapi import FastAPI, HTTPException, Query
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
+from .frozen import app_dir, resource_path
 from .llm import LLMClient
 from .memory import DEFAULT_DB_PATH, Memory, fmt_search
 from .models import Episode
 from .storage import Storage
 
 # 服务进程跑在 Session 0（Servy/Windows 服务），不继承用户 shell 环境，
-# 必须显式加载项目根目录的 .env（LLM_API_KEY 等）
-load_dotenv(Path(__file__).resolve().parent.parent / ".env", override=True)
+# 必须显式加载 .env（LLM_API_KEY 等）；frozen（exe）时取 exe 旁，源码时取项目根
+load_dotenv(app_dir() / ".env", override=True)
 
 logger = logging.getLogger(__name__)
 
@@ -225,7 +225,7 @@ async def stats(group_id: str | None = None) -> dict[str, int]:
 
 # ── Web 控制台 ─────────────────────────────────────────────
 
-STATIC_DIR = Path(__file__).resolve().parent / "static"
+STATIC_DIR = resource_path("static")
 
 
 @app.get("/", include_in_schema=False)

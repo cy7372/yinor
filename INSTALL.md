@@ -19,6 +19,18 @@
 
 ## 1. 获取代码
 
+### 方式 A：Windows 安装包（推荐，免 Python）
+
+从 [Releases](https://github.com/cy7372/yinor/releases) 下载 `yinor-Setup-v<版本>.exe`，双击安装（免管理员权限，装到 `%APPDATA%\yinor`）。安装后：
+
+1. 进入 `%APPDATA%\yinor`，把 `.env.example` 复制为 `.env`，填入你的 LLM key（直连云端的完整配置见第 3 节）
+2. 双击桌面/开始菜单的 yinor 图标启动（控制台窗口即日志窗，关窗即停）
+3. 浏览器打开 <http://127.0.0.1:20102/>
+
+**更新**：下载新版 Setup 覆盖安装即可，`.env` 与 `data/`（记忆库）自动保留，不会丢数据。卸载同样保留数据。
+
+### 方式 B：源码运行（所有平台）
+
 git clone 或从 GitHub Release 下载源码包，解压即得最小文件集：
 
 ```text

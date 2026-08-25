@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import logging
-from pathlib import Path
 
+from .frozen import app_dir
 from .llm import LLMClient
 from .models import Episode, SearchResponse
 from .pipeline import add_episode as _add_episode
@@ -13,7 +13,7 @@ from .storage import Storage
 
 logger = logging.getLogger(__name__)
 
-DEFAULT_DB_PATH = str(Path(__file__).resolve().parent.parent / "data" / "yinor.db")
+DEFAULT_DB_PATH = str(app_dir() / "data" / "yinor.db")
 
 
 class Memory:
